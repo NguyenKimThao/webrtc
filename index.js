@@ -5,7 +5,6 @@ var nodeStatic = require('node-static');
 var http = require('http');
 var socketIO = require('socket.io');
 
-
 var https = require('https');
 var fs = require('fs');
 
@@ -15,14 +14,16 @@ var options = {
   cert: fs.readFileSync('./cert.pem')
 };
 
-
+var port = process.env.PORT || 8080;
 var fileServer = new (nodeStatic.Server)();
-var appHttp = http.createServer(function (req, res) {
-  fileServer.serve(req, res);
-}).listen(8888);
+
+// var appHttp = http.createServer(function (req, res) {
+//   fileServer.serve(req, res);
+// }).listen(8888);
+
 var app = https.createServer(options, function (req, res) {
   fileServer.serve(req, res);
-}).listen(8080);
+}).listen(port);
 
 
 
