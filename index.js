@@ -19,13 +19,15 @@ var fileServer = new (nodeStatic.Server)();
 
 
 var app=express();
-
+app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
 
 // var appHttps = https.createServer(options, function (req, res) {
 //   fileServer.serve(req, res);
 // }).listen(port);
-
+app.use("/",function(rep,res){
+  res.sendfile("./public/index.html");
+})
 var io = socketIO.listen(appHttp);
 io.sockets.on('connection', function (socket) {
 
