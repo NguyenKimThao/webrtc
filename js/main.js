@@ -93,11 +93,10 @@ var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 navigator.mediaDevices.getUserMedia({
   video: true,
-  audio: true,
-})
-  .then(gotStream)
+  audio: false
+}).then(gotStream)
   .catch(function (e) {
-    alert('getUserMedia() error: ' + e.name);
+    alert('getUserMedia() error: ' + e.name + '\n' + e.message);
   });
 
 function gotStream(stream) {
@@ -212,7 +211,7 @@ function setLocalAndSendMessage(sessionDescription) {
   var res = "";
   sdpList.forEach(element => {
     // if (element.startsWith("m=audio"))
-      // element = "m=audio 9 UDP/TLS/RTP/SAVPF 111"
+    // element = "m=audio 9 UDP/TLS/RTP/SAVPF 111"
     // if (element.startsWith("m=video")) {
     //   element = "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 123 127 122 125 107 108 109 124"
     // }

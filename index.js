@@ -18,17 +18,17 @@ var port = process.env.PORT || 8080;
 var fileServer = new (nodeStatic.Server)();
 
 
-// var app = https.createServer(options, function (req, res) {
+// var app=express();
+
+// var appHttp = http.createServer(function (req, res) {
 //   fileServer.serve(req, res);
 // }).listen(port);
-var app=express();
 
-var appHttp = http.createServer(function (req, res) {
+var appHttps = https.createServer(options, function (req, res) {
   fileServer.serve(req, res);
 }).listen(port);
 
-
-var io = socketIO.listen(appHttp);
+var io = socketIO.listen(appHttps);
 io.sockets.on('connection', function (socket) {
 
   // convenience function to log server messages on the client
