@@ -138,11 +138,6 @@ var pcConfig = {
     'urls': 'turn:172.24.28.176:3009?transport=udp',
     "username": "thaonk",
     "credential": "123456"
-  },
-  {
-    'urls': 'turn:172.24.28.176:30010?transport=udp',
-    "username": "thaonk",
-    "credential": "123456"
   }]
 };
 
@@ -151,10 +146,8 @@ function createPeerConnection() {
   try {
     if (isInitiator) {
       pcConfig.iceServers[0].username = '0thaonk' + room;
-      pcConfig.iceServers[1].username = '0thaonk' + room;
     } else {
       pcConfig.iceServers[0].username = '1thaonk' + room;
-      pcConfig.iceServers[1].username = '1thaonk' + room;
     }
     console.log(pcConfig.iceServers[0]);
     pc = new RTCPeerConnection(pcConfig);
