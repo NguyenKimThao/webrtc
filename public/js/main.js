@@ -136,7 +136,7 @@ window.onbeforeunload = function () {
 /////////////////////////////////////////////////////////
 var pcConfig = {
   'iceServers': [{
-    'urls': 'turn:10.30.80.62:3010?transport=udp',
+    'urls': 'turn:172.24.28.176:3010?transport=udp',
     "username": "thaonk",
     "credential": "123456"
   }]
@@ -145,11 +145,11 @@ var pcConfig = {
 
 function createPeerConnection() {
   try {
-    // if (isInitiator) {
-    //   pcConfig.iceServers[0].username = '0thaonk' + room;
-    // } else {
-    //   pcConfig.iceServers[0].username = '1thaonk' + room;
-    // }
+    if (isInitiator) {
+      pcConfig.iceServers[0].username = '0thaonk' + room;
+    } else {
+      pcConfig.iceServers[0].username = '1thaonk' + room;
+    }
     console.log(pcConfig.iceServers[0]);
     pc = new RTCPeerConnection(pcConfig);
     pc.onicecandidate = handleIceCandidate;
