@@ -113,7 +113,8 @@ var constraints = {
   video: true,
   audio: true
 };
-
+// isChannelReady=true;
+// isStarted=false
 function maybeStart() {
   console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
   if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
@@ -135,7 +136,7 @@ window.onbeforeunload = function () {
 /////////////////////////////////////////////////////////
 var pcConfig = {
   'iceServers': [{
-    'urls': 'turn:120.138.69.104:3010?transport=udp',
+    'urls': 'turn:10.30.80.62:3010?transport=udp',
     "username": "thaonk",
     "credential": "123456"
   }]
@@ -144,11 +145,11 @@ var pcConfig = {
 
 function createPeerConnection() {
   try {
-    if (isInitiator) {
-      pcConfig.iceServers[0].username = '0thaonk' + room;
-    } else {
-      pcConfig.iceServers[0].username = '1thaonk' + room;
-    }
+    // if (isInitiator) {
+    //   pcConfig.iceServers[0].username = '0thaonk' + room;
+    // } else {
+    //   pcConfig.iceServers[0].username = '1thaonk' + room;
+    // }
     console.log(pcConfig.iceServers[0]);
     pc = new RTCPeerConnection(pcConfig);
     pc.onicecandidate = handleIceCandidate;
@@ -199,31 +200,31 @@ function doAnswer() {
 }
 
 function setLocalAndSendMessage(sessionDescription) {
-  var sdp = sessionDescription.sdp;
-  var sdpList = sdp.split('\n');
-  var res = "";
-  sdpList.forEach(element => {
-    // if (element.startsWith("m=audio"))
-    // element = "m=audio 9 UDP/TLS/RTP/SAVPF 111"
-    // if (element.startsWith("m=video")) {
-    //   element = "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 123 127 122 125 107 108 109 124"
-    // }
-    res = res + element + "\n";
-  });
-  res = res.substr(0, res.length - 1);
+  // var sdp = sessionDescription.sdp;
+  // var sdpList = sdp.split('\n');
+  // var res = "";
+  // sdpList.forEach(element => {
+  //   // if (element.startsWith("m=audio"))
+  //   // element = "m=audio 9 UDP/TLS/RTP/SAVPF 111"
+  //   // if (element.startsWith("m=video")) {
+  //   //   element = "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 123 127 122 125 107 108 109 124"
+  //   // }
+  //   res = res + element + "\n";
+  // });
+  // res = res.substr(0, res.length - 1);
 
-  // for(var i =0 ;i<sdpList.length;i++);
-  // {
-  //   var l=sdpList.indexOf(i);
-  //   console.log(sdpList.indexOf(i));
-  //   if(l.startsWith("m=audio"))
-  //     l="m=audio 9 UDP/TLS/RTP/SAVPF 111"
+  // // for(var i =0 ;i<sdpList.length;i++);
+  // // {
+  // //   var l=sdpList.indexOf(i);
+  // //   console.log(sdpList.indexOf(i));
+  // //   if(l.startsWith("m=audio"))
+  // //     l="m=audio 9 UDP/TLS/RTP/SAVPF 111"
 
-  //   res=res+l+"\n";
-  // }
-  // console.log("res",res);
-  console.log('setLocalAndSendMessage sending message', sessionDescription);
-  sessionDescription.sdp = res;
+  // //   res=res+l+"\n";
+  // // }
+  // // console.log("res",res);
+  // console.log('setLocalAndSendMessage sending message', sessionDescription);
+  // sessionDescription.sdp = res;
   console.log('setLocalAndSendMessage sending message', sessionDescription);
   pc.setLocalDescription(sessionDescription);
   sendMessage(sessionDescription);
