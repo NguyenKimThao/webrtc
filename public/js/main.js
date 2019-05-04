@@ -136,7 +136,7 @@ window.onbeforeunload = function () {
 /////////////////////////////////////////////////////////
 var pcConfig = {
   'iceServers': [{
-    'urls': 'turn:172.24.28.176:3010?transport=udp',
+    'urls': 'turn:10.30.80.62:3010?transport=udp',
     "username": "thaonk",
     "credential": "123456"
   }]
