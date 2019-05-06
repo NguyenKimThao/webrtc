@@ -136,8 +136,9 @@ window.onbeforeunload = function () {
 /////////////////////////////////////////////////////////
 var pcConfig = {
   'iceServers': [{
-    'urls': 'turn:10.30.80.62:3010?transport=udp',
-    // 'urls': 'turn:10.79.21.221:3010?transport=udp',
+    // 'urls': 'turn:10.30.80.62:3010?transport=udp',
+    // 'urls': 'turn:172.24.28.176:3010?transport=udp',
+    'urls': 'turn:222.255.216.225:3010?transport=udp',
     "username": "thaonk",
     "credential": "123456"
   }]
@@ -205,25 +206,14 @@ function setLocalAndSendMessage(sessionDescription) {
   // var sdpList = sdp.split('\n');
   // var res = "";
   // sdpList.forEach(element => {
-  //   // if (element.startsWith("m=audio"))
-  //   // element = "m=audio 9 UDP/TLS/RTP/SAVPF 111"
-  //   // if (element.startsWith("m=video")) {
-  //   //   element = "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 123 127 122 125 107 108 109 124"
-  //   // }
+  //   var e=element;
+  //   if (e.startsWith("m=audio"))
+  //   e =e.repal
+    
   //   res = res + element + "\n";
   // });
   // res = res.substr(0, res.length - 1);
 
-  // // for(var i =0 ;i<sdpList.length;i++);
-  // // {
-  // //   var l=sdpList.indexOf(i);
-  // //   console.log(sdpList.indexOf(i));
-  // //   if(l.startsWith("m=audio"))
-  // //     l="m=audio 9 UDP/TLS/RTP/SAVPF 111"
-
-  // //   res=res+l+"\n";
-  // // }
-  // // console.log("res",res);
   // console.log('setLocalAndSendMessage sending message', sessionDescription);
   // sessionDescription.sdp = res;
   console.log('setLocalAndSendMessage sending message', sessionDescription);
