@@ -136,7 +136,8 @@ window.onbeforeunload = function () {
 /////////////////////////////////////////////////////////
 var pcConfig = {
   'iceServers': [{
-    'urls': 'turn:10.30.80.62:3010?transport=udp',
+    // 'urls': 'turn:10.30.80.62:3010?transport=udp',
+    'urls': 'turn:172.24.28.176:3010?transport=udp',
     "username": "thaonk",
     "credential": "123456"
   }]
@@ -184,7 +185,7 @@ function handleCreateOfferError(event) {
 
 function doCall() {
   console.log('Sending offer to peer');
-  pc.createOffer(setLocalAndSendMessage, handleCreateOfferError);
+  pc.createOffer(constraints).then(setLocalAndSendMessage, handleCreateOfferError);
 }
 function restart() {
   offerOptions.iceRestart = true;
