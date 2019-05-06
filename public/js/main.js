@@ -111,7 +111,7 @@ function gotStream(stream) {
 
 var constraints = {
   video: true,
-  audio: true
+  audio: false
 };
 // isChannelReady=true;
 // isStarted=false
