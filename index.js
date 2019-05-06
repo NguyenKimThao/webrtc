@@ -42,7 +42,7 @@ io.sockets.on('connection', function (socket) {
   socket.on('message', function (data) {
     log('Client said: ', data.message);
     // for a real app, would be room-only (not broadcast)
-    io.sockets.in(data.room).emit('message', data.message);
+    socket.broadcast.to(data.room).emit('message', data.message);
   });
 
   socket.on('create or join', function (room) {
