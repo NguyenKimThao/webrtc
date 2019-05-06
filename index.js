@@ -38,7 +38,7 @@ io.sockets.on('connection', function (socket) {
     socket.emit('log', array);
   }
 
-  socket.on('message', function (message) {
+  socket.on('message', function (room,message) {
     log('Client said: ', message);
     // for a real app, would be room-only (not broadcast)
     io.sockets.in(room).emit('message', message);
