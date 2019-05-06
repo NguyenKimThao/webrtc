@@ -52,9 +52,9 @@ socket.on('log', function (array) {
 
 ////////////////////////////////////////////////
 
-function sendMessage(message) {
+function sendMessage(room, message) {
   console.log('Client sending message: ', message);
-  socket.emit('message', message);
+  socket.emit('message', { room: room, message: message });
 }
 
 if (room !== '') {
@@ -103,7 +103,7 @@ function gotStream(stream) {
   console.log('Adding local stream.');
   localStream = stream;
   localVideo.srcObject = stream;
-  sendMessage('got user media');
+  sendMessage(room,'got user media');
   if (isInitiator) {
     maybeStart();
   }
@@ -130,7 +130,7 @@ function maybeStart() {
 }
 
 window.onbeforeunload = function () {
-  sendMessage('bye');
+  sendMessage(room,'bye');
 };
 
 /////////////////////////////////////////////////////////
@@ -168,7 +168,7 @@ function createPeerConnection() {
 function handleIceCandidate(event) {
   console.log('icecandidate event: ', event);
   if (event.candidate && event.candidate.type == 'relay') {
-    sendMessage({
+    sendMessage(room,{
       type: 'candidate',
       label: event.candidate.sdpMLineIndex,
       id: event.candidate.sdpMid,
@@ -228,7 +228,7 @@ function setLocalAndSendMessage(sessionDescription) {
   // sessionDescription.sdp = res;
   console.log('setLocalAndSendMessage sending message', sessionDescription);
   pc.setLocalDescription(sessionDescription);
-  sendMessage(sessionDescription);
+  sendMessage(room,sessionDescription);
 }
 
 function onCreateSessionDescriptionError(error) {
@@ -277,7 +277,7 @@ function handleRemoteStreamRemoved(event) {
 function hangup() {
   console.log('Hanging up.');
   stop();
-  sendMessage('bye');
+  sendMessage(room,'bye');
 }
 
 function handleRemoteHangup() {

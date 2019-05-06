@@ -4,7 +4,7 @@ var os = require('os');
 var nodeStatic = require('node-static');
 var http = require('http');
 var socketIO = require('socket.io');
-var express=require('express');
+var express = require('express');
 var https = require('https');
 var fs = require('fs');
 
@@ -18,17 +18,18 @@ var port = process.env.PORT || 8080;
 var fileServer = new (nodeStatic.Server)();
 
 
-var app=express();
+var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
 
 // var appHttps = https.createServer(options, function (req, res) {
 //   fileServer.serve(req, res);
 // }).listen(port);
-app.use("/",function(rep,res){
+app.use("/", function (rep, res) {
   res.sendfile("./public/index.html");
 })
 var io = socketIO.listen(appHttp);
+
 io.sockets.on('connection', function (socket) {
 
   // convenience function to log server messages on the client
@@ -38,10 +39,10 @@ io.sockets.on('connection', function (socket) {
     socket.emit('log', array);
   }
 
-  socket.on('message', function (room,message) {
-    log('Client said: ', message);
+  socket.on('message', function (data) {
+    log('Client said: ', data.message);
     // for a real app, would be room-only (not broadcast)
-    io.sockets.in(room).emit('message', message);
+    io.sockets.in(data.room).emit('message', data.message);
   });
 
   socket.on('create or join', function (room) {
