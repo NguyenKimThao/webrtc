@@ -93,7 +93,7 @@ var localVideo = document.querySelector('#localVideo');
 var remoteVideo = document.querySelector('#remoteVideo');
 navigator.mediaDevices.getUserMedia({
   video: true,
-  audio: false
+  audio: true
 }).then(gotStream)
   .catch(function (e) {
     alert('getUserMedia() error: ' + e.name + '\n' + e.message);
@@ -111,7 +111,7 @@ function gotStream(stream) {
 
 var constraints = {
   video: true,
-  audio: false
+  audio: true
 };
 // isChannelReady=true;
 // isStarted=false
