@@ -12,8 +12,13 @@
 <body>
 
   <h1>Realtime communication with WebRTC</h1>
-  Server: <input type="text" id="server" value="127.0.0.1" />
-  Port: <input type="text" id="port" value="3010" />
+  Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
+    <option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
+    <option value="127.0.0.1">Local(127.0.0.1)</option>
+  </select>
+
+  Server: <input type="text" id="server" value="" />
+  Port: <input type="text" id="port" value="" />
   <br>
   SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
     <option value="2">Version Mobile Cu</option>

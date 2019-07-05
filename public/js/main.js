@@ -128,7 +128,11 @@ function initCall() {
   session = $("#session").val()
   server = $("#server").val()
   port = $("#port").val()
-
+  version = $("#version").val()
+  if(!server || server==""){
+    server= $("#servercb").val()
+    port="3010"
+  }
   if (!userid || userid == "") {
     alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
     return 0
@@ -169,9 +173,8 @@ function call(isowner, video, audio) {
     offerToReceiveVideo: video,
     offerToReceiveAudio: audio,
   }
-  server = $("#server").val();
-  port = $("#port").val();
-  version = $("#version").val()
+
+  
   navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(function (e) {
     alert('getUserMedia() error: ' + e.name);
   });
@@ -265,10 +268,12 @@ function handleIceCandidate(e) {
 function handleIceConnectionStateChange(e) {
   // console.log("change:", e);
   if (e.currentTarget.iceConnectionState == "failed") {
-    if (myVar == null)
-      myVar = setInterval(function () {
-        Restart()
-      }, 1000);
+    if (myVar == null) {
+      // Restart()
+      // myVar = setInterval(function () {
+      //   Restart()
+      // }, 1000);
+    }
 
   }
   if (e.currentTarget.iceConnectionState == "complete" || e.currentTarget.iceConnectionState == "connected") {
