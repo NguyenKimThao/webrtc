@@ -135,7 +135,7 @@ function initCall() {
   version = $("#version").val()
   if (!server || server == "") {
     server = $("#servercb").val()
-    port = "3010"
+    port = "8010"
   }
   if (!userid || userid == "") {
     alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
