@@ -12,7 +12,28 @@
 <body>
 
   <h1>Realtime communication with WebRTC</h1>
-  <button onclick="restart()">Restart()</button>
+  Server: <input type="text" id="server" value="127.0.0.1" />
+  Port: <input type="text" id="port" value="3010" />
+  <br>
+  SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
+    <option value="2">Version Mobile Cu</option>
+    <option value="1">Version Mobile Moi</option>
+    <option value="0">Web</option>
+  </select>
+  <br>
+  <button onclick="Reset()">Reset</button>
+  <button onclick="Restart()">Restart</button>
+  <button onclick="StopCall()">Stop</button>
+  <br>
+  <button onclick="CallAudio()" id="callaudio">Call Audio</button>
+  <button onclick="CallVideo()" id="callvideo">Call Video</button>
+  <br>
+  <br>
+  <button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
+  <button onclick="JoinVideo()" id="joinvideo">Join Video</button>
+  <br>
+  userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled /><br>
+  PeerID: <input type="text" id="session" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
   <div id="videos">
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
@@ -20,6 +41,7 @@
   <!-- This file is automatically added/served when running "node index.js". -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="js/adapter-latest.js"></script>
+  <script src="js/jquery-3.4.0.min.js"></script>
   <script src="js/main.js"></script>
 
 </body>

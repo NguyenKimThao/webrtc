@@ -1,326 +1,657 @@
 'use strict';
 
-var isChannelReady = false;
-var isInitiator = false;
-var isStarted = false;
-var localStream;
-var pc;
-var remoteStream;
-var turnReady;
-
-// Set up audio and video regardless of what devices are present.
-var sdpConstraints = {
-  offerToReceiveAudio: true,
-  offerToReceiveVideo: true
-};
-
-const offerOptions = {
-  offerToReceiveAudio: 1,
-  offerToReceiveVideo: 1
-};
-/////////////////////////////////////////////
-
-var room = 'foo';
-// Could prompt for room name:
-room = prompt('Enter room name:');
-
-var socket = io.connect();
-
-socket.on('created', function (room) {
-  console.log('Created room ' + room);
-  isInitiator = true;
-});
-
-socket.on('full', function (room) {
-  console.log('Room ' + room + ' is full');
-});
-
-socket.on('join', function (room) {
-  console.log('Another peer made a request to join room ' + room);
-  console.log('This peer is the initiator of room ' + room + '!');
-  isChannelReady = true;
-});
-
-socket.on('joined', function (room) {
-  console.log('joined: ' + room);
-  isChannelReady = true;
-});
-
-socket.on('log', function (array) {
-  console.log.apply(console, array);
-});
-
-////////////////////////////////////////////////
-
-function sendMessage(room, message) {
-  console.log('Client sending message: ', message);
-  socket.emit('message', { room: room, message: message });
-}
-
-if (room !== '') {
-  socket.emit('create or join', room);
-  console.log('Attempted to create or  join room', room);
-}
-
-
-// This client receives a message
-socket.on('message', function (message) {
-  console.log('Client received message:', message);
-  if (message === 'got user media') {
-    maybeStart();
-  } else if (message.type === 'offer') {
-    if (!isInitiator && !isStarted) {
-      maybeStart();
-    }
-    pc.setRemoteDescription(new RTCSessionDescription(message));
-    doAnswer();
-  } else if (message.type === 'answer' && isStarted) {
-    pc.setRemoteDescription(new RTCSessionDescription(message));
-  } else if (message.type === 'candidate' && isStarted) {
-    var candidate = new RTCIceCandidate({
-      sdpMLineIndex: message.label,
-      candidate: message.candidate
-    });
-    pc.addIceCandidate(candidate);
-  } else if (message === 'bye' && isStarted) {
-    handleRemoteHangup();
-  }
-});
-
-////////////////////////////////////////////////////
-
-var localVideo = document.querySelector('#localVideo');
-var remoteVideo = document.querySelector('#remoteVideo');
-navigator.mediaDevices.getUserMedia({
-  video: true,
-  audio: true
-}).then(gotStream)
-  .catch(function (e) {
-    alert('getUserMedia() error: ' + e.name + '\n' + e.message);
-  });
-
-function gotStream(stream) {
-  console.log('Adding local stream.');
-  localStream = stream;
-  localVideo.srcObject = stream;
-  sendMessage(room,'got user media');
-  if (isInitiator) {
-    maybeStart();
-  }
-}
 
 var constraints = {
   video: true,
   audio: true
 };
-// isChannelReady=true;
-// isStarted=false
-function maybeStart() {
-  console.log('>>>>>>> maybeStart() ', isStarted, localStream, isChannelReady);
-  if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
-    console.log('>>>>>> creating peer connection');
-    createPeerConnection();
-    pc.addStream(localStream);
-    isStarted = true;
-    console.log('isInitiator', isInitiator);
-    if (isInitiator) {
-      doCall();
-    }
-  }
+var configOffer = {
+  offerToReceiveVideo: false,
+  offerToReceiveAudio: false,
+  iceRestart: false,
 }
 
+var localStream = null;
+var localVideo = document.querySelector('#localVideo');
+var remoteVideo = document.querySelector('#remoteVideo');
+var session = null;
+var userid = null;
+var peerconnection = null;
+var remoteStream = null;
+var isVideo = false;
+var isAudio = false;
+var room = ""
+var isOwner = 0;
+var server = ""
+var version = 0
+var port = 0
+function stop() {
+  $("#callaudio").prop('disabled', false);
+  $("#callvideo").prop('disabled', false);
+  $("#joinvideo").prop('disabled', false);
+  $("#joinvideo").prop('disabled', false);
+  if (peerconnection)
+    peerconnection.close();
+  if (localStream && localStream.getTracks())
+    localStream.getTracks().forEach(track => track.stop())
+}
+
+function Reset() {
+  stop();
+  init();
+}
+
+function init() {
+  getSession();
+}
+function StopCall() {
+  Reset();
+}
+
+function Restart() {
+  configOffer.iceRestart = true;
+  maybeStart()
+}
+
+init();
+////////////////////////////////////////
+
+var socket = io.connect();
+
+function sendMessage(message) {
+  console.log('Client sending message: ', message);
+  socket.emit('message', { room: room, message: message });
+}
+
+socket.on('start', function (message) {
+  console.log("bat dau call", isOwner);
+  if (isOwner)
+    peerconnection.createOffer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
+});
+
+socket.on('bye', function (message) {
+  socket.emit('bye', room)
+  Reset()
+});
+
+// This client receives a message
+socket.on('message', function (message) {
+  console.log('Client received message:', message);
+  if (message.type === 'offer') {
+    peerconnection.setRemoteDescription(new RTCSessionDescription(message));
+    peerconnection.createAnswer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
+  } else if (message.type === 'answer') {
+    peerconnection.setRemoteDescription(new RTCSessionDescription(message));
+  } else if (message.type === 'candidate') {
+    var candidate = new RTCIceCandidate({
+      sdpMLineIndex: message.label,
+      candidate: message.candidate
+    });
+    peerconnection.addIceCandidate(candidate);
+  }
+});
+
 window.onbeforeunload = function () {
-  sendMessage(room,'bye');
+  socket.emit("bye", room);
 };
+/////////////////////////////////////////
 
-/////////////////////////////////////////////////////////
-var pcConfig = {
-  'iceServers': [{
-    // 'urls': 'turn:10.30.80.62:3010?transport=udp',
-    // 'urls': 'turn:172.24.28.176:3010?transport=udp',
-    'urls': 'turn:222.255.216.225:3010?transport=udp',
-    "username": "thaonk",
-    "credential": "123456"
-  }]
-};
+function getConfigPeerConnection() {
+
+  var username = "";
+  var payloadVideo = "125"
+  var payloadAudio = "111"
+
+  username = version + ":" + isOwner + ":"
+  if (isOwner) {
+    room = userid
+    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room
+  }
+  else {
+    room = session
+    payloadVideo = "97"
+    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room
+  }
 
 
-function createPeerConnection() {
+  var pcConfig = {
+    'iceServers': [{
+      'urls': 'turn:' + server + ":" + port + '?transport=udp',
+      "username": username,
+      "credential": "123456"
+    }]
+  };
+  return pcConfig;
+}
+
+function initCall() {
+  session = $("#session").val()
+  server = $("#server").val()
+  port = $("#port").val()
+
+  if (!userid || userid == "") {
+    alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
+    return 0
+  }
+  if (!server || server == "" || !port || port == "" || parseInt(port) <= 0) {
+    alert("KhÃ´ng Ä‘á»ƒ server trá»‘ng")
+    return 0
+  }
+  if (!session || session == "" || parseInt(session) <= 0) {
+    alert("KhÃ´ng Ä‘á»ƒ peerID trá»‘ng")
+    return 0;
+  }
+  if (userid == session) {
+    alert("KhÃ´ng Ä‘á»ƒ peerID phai khÃ¡c vá»›i userID trá»‘ng")
+    return 0
+  }
+  $("#callaudio").prop('disabled', true);
+  $("#callvideo").prop('disabled', true);
+  $("#joinaudio").prop('disabled', true);
+  $("#joinvideo").prop('disabled', true);
+  return 1;
+
+
+}
+
+function call(isowner, video, audio) {
+  isOwner = isowner
+  var initcall = initCall();
+  if (initcall == 0)
+    return
+  isVideo = video
+  isAudio = audio
+  constraints = {
+    video: video,
+    audio: audio
+  };
+  configOffer = {
+    offerToReceiveVideo: video,
+    offerToReceiveAudio: audio,
+  }
+  server = $("#server").val();
+  port = $("#port").val();
+  version = $("#version").val()
+  navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(function (e) {
+    alert('getUserMedia() error: ' + e.name);
+  });
+}
+
+function gotStream(stream) {
+  console.log('Adding local stream.');
+  localStream = stream;
+  localVideo.srcObject = stream;
+  peerconnection = CreatePeerConnection();
+  if (!peerconnection) {
+    alert('Cannot create RTCPeerConnection object by config');
+    return
+  }
+  maybeStart();
+
+}
+function getSession() {
+  $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
+    var dataRes = JSON.parse(res)
+    userid = dataRes.data.id;
+    $("#session").val(userid);
+    $("#userid").val(userid)
+  });
+}
+
+function getRTCIceCandidate() {
+
+  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag " + "local" + " network-id 1"
+  var candidate = new RTCIceCandidate({
+    sdpMLineIndex: 0,
+    candidate: candidateStr
+  });
+  return candidate;
+}
+///////////////////////////////////////
+function CallAudio() {
+  call(/*isOwner=*/1,/*video=*/false,/*audio=*/true)
+}
+function CallVideo() {
+  call(/*isOwner=*/1,/*video=*/true,/*audio=*/true)
+}
+function JoinAudio() {
+  call(/*isOwner=*/0,/*video=*/false,/*audio=*/true)
+}
+function JoinVideo() {
+  call(/*isOwner=*/0,/*video=*/true,/*audio=*/true)
+}
+function TatAudio() {
+  isAudio = false
+  Restart();
+}
+function TatVideo() {
+  isVideo = false
+  Restart();
+}
+function CreatePeerConnection() {
+  console.log('>>>>>> creating peer connection');
+
   try {
-    if (isInitiator) {
-      pcConfig.iceServers[0].username = '0thaonk' + room;
-    } else {
-      pcConfig.iceServers[0].username = '1thaonk' + room;
-    }
-    console.log(pcConfig.iceServers[0]);
-    pc = new RTCPeerConnection(pcConfig);
-    pc.onicecandidate = handleIceCandidate;
+    var pcConfig = getConfigPeerConnection()
+    if (!pcConfig)
+      return null;
+    var pc = new RTCPeerConnection(pcConfig);
     pc.onaddstream = handleRemoteStreamAdded;
     pc.onremovestream = handleRemoteStreamRemoved;
-    getStats(pc);
-    console.log('Created RTCPeerConnnection');
+    pc.onicecandidate = handleIceCandidate;
+    pc.addStream(localStream);
+    pc.oniceconnectionstatechange = handleIceConnectionStateChange;
+    console.log('Created RTCPeerConnnection sessecion');
+    return pc;
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
     alert('Cannot create RTCPeerConnection object.');
-    return;
   }
-}
+  return null
 
-function handleIceCandidate(event) {
-  console.log('icecandidate event: ', event);
-  if (event.candidate && event.candidate.type == 'relay') {
-    sendMessage(room,{
+}
+var myVar = null;
+function handleIceCandidate(e) {
+  if (e.candidate && e.candidate.type == "relay") {
+    console.log("handleIceCandidate:", e);
+    sendMessage({
       type: 'candidate',
       label: event.candidate.sdpMLineIndex,
       id: event.candidate.sdpMid,
       candidate: event.candidate.candidate
     });
-  } else {
-    console.log('End of candidates.');
   }
 }
+function handleIceConnectionStateChange(e) {
+  // console.log("change:", e);
+  if (e.currentTarget.iceConnectionState == "failed") {
+    if (myVar == null)
+      myVar = setInterval(function () {
+        Restart()
+      }, 1000);
 
-function handleCreateOfferError(event) {
-  console.log('createOffer() error: ', event);
+  }
+  if (e.currentTarget.iceConnectionState == "complete" || e.currentTarget.iceConnectionState == "connected") {
+    if (myVar)
+      clearInterval(myVar);
+  }
+
 }
 
-function doCall() {
-  console.log('Sending offer to peer');
-  pc.createOffer(constraints).then(setLocalAndSendMessage, handleCreateOfferError);
-}
-function restart() {
-  offerOptions.iceRestart = true;
-  pc.createOffer(offerOptions).then(setLocalAndSendMessage, handleCreateOfferError);
-}
-
-function doAnswer() {
-  console.log('Sending answer to peer.');
-  pc.createAnswer().then(
-    setLocalAndSendMessage,
-    onCreateSessionDescriptionError
-  );
-}
-
-function setLocalAndSendMessage(sessionDescription) {
-  // var sdp = sessionDescription.sdp;
-  // var sdpList = sdp.split('\n');
-  // var res = "";
-  // sdpList.forEach(element => {
-  //   var e=element;
-  //   if (e.startsWith("m=audio"))
-  //   e =e.repal
-    
-  //   res = res + element + "\n";
-  // });
-  // res = res.substr(0, res.length - 1);
-
-  // console.log('setLocalAndSendMessage sending message', sessionDescription);
-  // sessionDescription.sdp = res;
-  console.log('setLocalAndSendMessage sending message', sessionDescription);
-  pc.setLocalDescription(sessionDescription);
-  sendMessage(room,sessionDescription);
-}
-
-function onCreateSessionDescriptionError(error) {
-  trace('Failed to create session description: ' + error.toString());
-}
-
-function requestTurn(turnURL) {
-  var turnExists = false;
-  for (var i in pcConfig.iceServers) {
-    if (pcConfig.iceServers[i].urls.substr(0, 5) === 'turn:') {
-      turnExists = true;
-      turnReady = true;
-      break;
+function maybeStart() {
+  if (version == "0") {
+    if (isOwner) {
+      socket.emit('create', room);
+    }
+    else {
+      socket.emit('join', room);
     }
   }
-  if (!turnExists) {
-    console.log('Getting TURN server from ', turnURL);
-    // No TURN server. Get one from computeengineondemand.appspot.com:
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        var turnServer = JSON.parse(xhr.responseText);
-        console.log('Got TURN server: ', turnServer);
-        pcConfig.iceServers.push({
-          'urls': 'turn:' + turnServer.username + '@' + turnServer.turn,
-          'credential': turnServer.password
-        });
-        turnReady = true;
-      }
-    };
-    xhr.open('GET', turnURL, true);
-    xhr.send();
+  else {
+    if (isOwner) {
+      peerconnection.createOffer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
+    }
+    else {
+      var offer = getOffer(constraints)
+      console.log(offer);
+      peerconnection.setRemoteDescription(offer)
+      peerconnection.createAnswer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
+    }
   }
+
 }
+
+/////////////////////////////////////////
+
+
+
+function setLocalAndSendMessage(sessionDescription) {
+  console.log('Offer sending message', sessionDescription);
+  peerconnection.setLocalDescription(sessionDescription);
+  sendMessage(sessionDescription);
+}
+
+function setLocalAndAddCandidate(sessionDescription) {
+  var sdp = sessionDescription.sdp;
+  console.log("setLocalAndAddCandidate: ", sessionDescription)
+  var sdpList = sdp.split('\n');
+  var res = "";
+  var ssrcVideo = ""
+  var ssrcVoice = ""
+  var dem = 0
+  sdpList.forEach(element => {
+    var e = element;
+    if (sessionDescription.type == "offer") {
+      if (e.startsWith("a=rtpmap:96") || e.startsWith("a=rtcp-fb:96")
+        || e.startsWith("a=rtpmap:97") || e.startsWith("a=fmtp:97"))
+        return;
+      if (e.startsWith("a=rtpmap:98") || e.startsWith("a=rtcp-fb:98") || e.startsWith("a=fmtp:98")
+        || e.startsWith("a=rtpmap:99") || e.startsWith("a=fmtp:99"))
+        return;
+      if (e.startsWith("a=rtpmap:100") || e.startsWith("a=rtcp-fb:100") || e.startsWith("a=fmtp:100")
+        || e.startsWith("a=rtpmap:101") || e.startsWith("a=fmtp:101"))
+        return
+      if (e.startsWith("a=rtpmap:102") || e.startsWith("a=rtcp-fb:102") || e.startsWith("a=fmtp:102")
+        || e.startsWith("a=rtpmap:123") || e.startsWith("a=fmtp:123"))
+        return
+      // if (e.startsWith("a=rtpmap:125") || e.startsWith("a=rtcp-fb:125") || e.startsWith("a=fmtp:125")
+      //     || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
+      //     return
+      if (e.startsWith("a=rtpmap:127") || e.startsWith("a=rtcp-fb:127") || e.startsWith("a=fmtp:127")
+        || e.startsWith("a=rtpmap:122") || e.startsWith("a=fmtp:122"))
+        return;
+      if (e.startsWith("a=rtpmap:108") || e.startsWith("a=rtpmap:109") || e.startsWith("a=fmtp:109")
+        || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
+        return;
+      if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
+      ) return;
+
+      if (e.startsWith("a=fmtp:125 level-asymmetr") && version == "2")
+        e = "a=fmtp:125 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+    }
+    else {
+      if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
+        e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+    }
+    if (e.startsWith("a=ice-pwd:"))
+      e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
+    if (e.startsWith("m=audio"))
+      dem = 0
+    if (e.startsWith("m=video"))
+      dem = 1
+    if (e.startsWith("a=ssrc:")) {
+      var eS = e.split(" ")[0]
+      var s = eS.split(":")[1]
+      if (dem == 0)
+        ssrcVoice = s
+      if (dem == 1) {
+        ssrcVideo = s
+        dem = 2;
+      }
+    }
+    res = res + e + "\n";
+  });
+  console.log(ssrcVideo, ssrcVoice)
+  if (ssrcVoice != "")
+    res = res.replace(new RegExp(ssrcVoice, 'g'), (parseInt(userid) * 2).toString());
+  if (ssrcVideo != "")
+    res = res.replace(new RegExp(ssrcVideo, 'g'), userid);
+  sessionDescription.sdp = res.substr(0, res.length - 1);
+  console.log('Offer sending message', sessionDescription);
+  peerconnection.setLocalDescription(sessionDescription);
+  if (sessionDescription.type == "offer") {
+    var message = getAnswer(constraints)
+    console.log('getAnswer sending message', message);
+    peerconnection.setRemoteDescription(new RTCSessionDescription(message))
+  }
+  peerconnection.addIceCandidate(getRTCIceCandidate());
+}
+
+
+//////////////////////////////////////////
 
 function handleRemoteStreamAdded(event) {
   console.log('Remote stream added.');
   remoteStream = event.stream;
   remoteVideo.srcObject = remoteStream;
 }
-
 function handleRemoteStreamRemoved(event) {
   console.log('Remote stream removed. Event: ', event);
 }
-
-function hangup() {
-  console.log('Hanging up.');
-  stop();
-  sendMessage(room,'bye');
+function handleCreateOfferError(event) {
+  console.log('createOffer() error: ', event);
 }
 
-function handleRemoteHangup() {
-  console.log('Session terminated.');
-  stop();
-  isInitiator = false;
-}
+/////////////////////////////////////////////////////
 
-function stop() {
-  isStarted = false;
-  pc.close();
-  pc = null;
-}
-function getStats(pc) {
-  var rest = 0;
-  window.setInterval(function () {
-    // console.log(pc.getSenders())
-    // var sender = pc.getSenders();
-    // sender.forEach(s => {
-    //   s.getStats().then(function (stats) {
-    //     stats.forEach(report => {
-    //       console.log(report);
-    //     });
-    //   });
-    // });
-    var demStats = 0
 
-    pc.getStats(null).then(stats => {
-      let statsOutput = "";
-      for (var report in stats) {
-        demStats++;
-        statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
-          `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
-        // console.log(report);
-        // Now the statistics for this report; we intentially drop the ones we
-        // sorted to the top above
+function getAnswer(type) {
+  var sdp = ""
+  var sessionVideo = session
+  var sessionAudio = (parseInt(session) * 2).toString()
+  console.log(type)
+  if (!type || type.audio == true && type.video == true) {
 
-        // Object.keys(report).forEach(statName => {
-        //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
-        //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
-        //   }
-        // });
-      }
-    });
-
-    if (demStats == 0)
-      rest++;
+    sdp = "v=0\n"
+      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+      + "s=-\n"
+      + "t=0 0\n"
+      + "a=group:BUNDLE audio video\n"
+      + "a=msid-semantic: WMS stream_id\n"
+      + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
+      + "c=IN IP4 0.0.0.0\n"
+      + "a=rtcp:9 IN IP4 0.0.0.0\n"
+      + "a=ice-ufrag:local\n"
+      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+      + "a=ice-options:trickle\n"
+      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+      + "a=setup:active\n"
+      + "a=mid:audio\n"
+      + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
+      + "a=sendrecv\n"
+      + "a=rtcp-mux\n"
+      + "a=rtpmap:111 opus/48000/2\n"
+      + "a=rtcp-fb:111 transport-cc\n"
+      + "a=fmtp:111 minptime=10;useinbandfec=1\n"
+      + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
+      + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
+      + "a=ssrc:" + sessionAudio + " label:video_label\n"
+      + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+      + "c=IN IP4 0.0.0.0\n"
+      + "a=rtcp:9 IN IP4 0.0.0.0\n"
+      + "a=ice-ufrag:local\n"
+      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+      + "a=ice-options:trickle\n"
+      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+      + "a=setup:active\n"
+      + "a=mid:video\n"
+      + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
+      + "a=sendrecv\n"
+      + "a=rtcp-mux\n"
+      + "a=rtcp-rsize\n"
+      + "a=rtpmap:97 H264/90000\n"
+      + "a=rtcp-fb:97 goog-remb\n"
+      + "a=rtcp-fb:97 transport-cc\n"
+      + "a=rtcp-fb:97 ccm fir\n"
+      + "a=rtcp-fb:97 nack\n"
+      + "a=rtcp-fb:97 nack pli\n"
+      // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+      + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+      + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
+      + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
+      + "a=ssrc:" + sessionVideo + " label:video_label\n"
+  }
+  else
+    if (type.video)
+      sdp = "v=0\n"
+        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+        + "s=-\n"
+        + "t=0 0\n"
+        + "a=group:BUNDLE video\n"
+        + "a=msid-semantic: WMS stream_id\n"
+        + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+        + "c=IN IP4 0.0.0.0\n"
+        + "a=rtcp:9 IN IP4 0.0.0.0\n"
+        + "a=ice-ufrag:local\n"
+        + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+        + "a=ice-options:trickle\n"
+        + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+        + "a=setup:active\n"
+        + "a=mid:video\n"
+        + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
+        + "a=sendrecv\n"
+        + "a=rtcp-mux\n"
+        + "a=rtcp-rsize\n"
+        + "a=rtpmap:97 H264/90000\n"
+        + "a=rtcp-fb:97 goog-remb\n"
+        + "a=rtcp-fb:97 transport-cc\n"
+        + "a=rtcp-fb:97 ccm fir\n"
+        + "a=rtcp-fb:97 nack\n"
+        + "a=rtcp-fb:97 nack pli\n"
+        // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+        + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+        + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
+        + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
+        + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
+        + "a=ssrc:" + sessionVideo + " label:video_label\n"
     else
-      rest = 0;
-    if (rest == 5) {
-      rest = 0;
-      // restart();
-    }
+      if (type.audio)
+        sdp = "v=0\n"
+          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+          + "s=-\n"
+          + "t=0 0\n"
+          + "a=group:BUNDLE audio\n"
+          + "a=msid-semantic: WMS stream_id\n"
+          + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
+          + "c=IN IP4 0.0.0.0\n"
+          + "a=rtcp:9 IN IP4 0.0.0.0\n"
+          + "a=ice-ufrag:local\n"
+          + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+          + "a=ice-options:trickle\n"
+          + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+          + "a=setup:active\n"
+          + "a=mid:audio\n"
+          + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
+          + "a=sendrecv\n"
+          + "a=rtcp-mux\n"
+          + "a=rtpmap:111 opus/48000/2\n"
+          + "a=rtcp-fb:111 transport-cc\n"
+          + "a=fmtp:111 minptime=10;useinbandfec=1\n"
+          + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
+          + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
+          + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
+          + "a=ssrc:" + sessionAudio + " label:video_label\n"
+  var message = { sdp: sdp, type: "answer" };
+  return message
+}
 
-  }, 1000);
+
+function getOffer(type) {
+  var sdp = ""
+  var sessionVideo = session
+  var sessionAudio = (parseInt(session) * 2).toString()
+  console.log(type)
+  if (!type || type.audio == true && type.video == true) {
+
+    sdp = "v=0\n"
+      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+      + "s=-\n"
+      + "t=0 0\n"
+      + "a=group:BUNDLE audio video\n"
+      + "a=msid-semantic: WMS stream_id\n"
+      + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
+      + "c=IN IP4 0.0.0.0\n"
+      + "a=rtcp:9 IN IP4 0.0.0.0\n"
+      + "a=ice-ufrag:local\n"
+      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+      + "a=ice-options:trickle\n"
+      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+      + "a=setup:actpass\n"
+      + "a=mid:audio\n"
+      + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
+      + "a=sendrecv\n"
+      + "a=rtcp-mux\n"
+      + "a=rtpmap:111 opus/48000/2\n"
+      + "a=rtcp-fb:111 transport-cc\n"
+      + "a=fmtp:111 minptime=10;useinbandfec=1\n"
+      + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
+      + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
+      + "a=ssrc:" + sessionAudio + " label:video_label\n"
+      + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+      + "c=IN IP4 0.0.0.0\n"
+      + "a=rtcp:9 IN IP4 0.0.0.0\n"
+      + "a=ice-ufrag:local\n"
+      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+      + "a=ice-options:trickle\n"
+      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+      + "a=setup:active\n"
+      + "a=mid:video\n"
+      + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
+      + "a=sendrecv\n"
+      + "a=rtcp-mux\n"
+      + "a=rtcp-rsize\n"
+      + "a=rtpmap:97 H264/90000\n"
+      + "a=rtcp-fb:97 goog-remb\n"
+      + "a=rtcp-fb:97 transport-cc\n"
+      + "a=rtcp-fb:97 ccm fir\n"
+      + "a=rtcp-fb:97 nack\n"
+      + "a=rtcp-fb:97 nack pli\n"
+      // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+      + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+      + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
+      + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
+      + "a=ssrc:" + sessionVideo + " label:video_label\n"
+  }
+  else
+    if (type.video)
+      sdp = "v=0\n"
+        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+        + "s=-\n"
+        + "t=0 0\n"
+        + "a=group:BUNDLE video\n"
+        + "a=msid-semantic: WMS stream_id\n"
+        + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+        + "c=IN IP4 0.0.0.0\n"
+        + "a=rtcp:9 IN IP4 0.0.0.0\n"
+        + "a=ice-ufrag:local\n"
+        + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+        + "a=ice-options:trickle\n"
+        + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+        + "a=setup:actpass\n"
+        + "a=mid:video\n"
+        + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
+        + "a=sendrecv\n"
+        + "a=rtcp-mux\n"
+        + "a=rtcp-rsize\n"
+        + "a=rtpmap:97 H264/90000\n"
+        + "a=rtcp-fb:97 goog-remb\n"
+        + "a=rtcp-fb:97 transport-cc\n"
+        + "a=rtcp-fb:97 ccm fir\n"
+        + "a=rtcp-fb:97 nack\n"
+        + "a=rtcp-fb:97 nack pli\n"
+        // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+        + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+        + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
+        + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
+        + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
+        + "a=ssrc:" + sessionVideo + " label:video_label\n"
+    else
+
+
+      if (type.audio)
+        sdp = "v=0\n"
+          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+          + "s=-\n"
+          + "t=0 0\n"
+          + "a=group:BUNDLE audio\n"
+          + "a=msid-semantic: WMS stream_id\n"
+          + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
+          + "c=IN IP4 0.0.0.0\n"
+          + "a=rtcp:9 IN IP4 0.0.0.0\n"
+          + "a=ice-ufrag:local\n"
+          + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+          + "a=ice-options:trickle\n"
+          + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+          + "a=setup:actpass\n"
+          + "a=mid:audio\n"
+          + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
+          + "a=sendrecv\n"
+          + "a=rtcp-mux\n"
+          + "a=rtpmap:111 opus/48000/2\n"
+          + "a=rtcp-fb:111 transport-cc\n"
+          + "a=fmtp:111 minptime=10;useinbandfec=1\n"
+          + "a=rtcp-fb:111 ccm fir\n"
+          + "a=rtcp-fb:111 nack\n"
+          + "a=rtcp-fb:111 nack pli\n"
+
+          + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
+          + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
+          + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
+          + "a=ssrc:" + sessionAudio + " label:video_label\n"
+  var message = { sdp: sdp, type: "offer" };
+  return message
 }
