@@ -16,7 +16,7 @@
     <option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
     <option value="127.0.0.1">Local(127.0.0.1)</option>
   </select>
-
+  <br>
   Server: <input type="text" id="server" value="" />
   Port: <input type="text" id="port" value="" />
   <br>
@@ -26,9 +26,15 @@
     <option value="0">Web</option>
   </select>
   <br>
+  PayloadTypeAudio <input type="text" id="typeAudio" value="111" />
+  <br>
+  PayloadTypeVideo <input type="text" id="typeVideo" value="125" />
+  <br>
+  <br>
   <button onclick="Reset()">Reset</button>
   <button onclick="Restart()">Restart</button>
   <button onclick="StopCall()">Stop</button>
+  <br>
   <br>
   <button onclick="CallAudio()" id="callaudio">Call Audio</button>
   <button onclick="CallVideo()" id="callvideo">Call Video</button>

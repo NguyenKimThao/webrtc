@@ -20,6 +20,8 @@ var peerconnection = null;
 var remoteStream = null;
 var isVideo = false;
 var isAudio = false;
+var payloadAudio="111"
+var payloadVideo="125"
 var room = ""
 var isOwner = 0;
 var server = ""
@@ -99,9 +101,12 @@ window.onbeforeunload = function () {
 function getConfigPeerConnection() {
 
   var username = "";
-  var payloadVideo = "125"
-  var payloadAudio = "111"
-
+  payloadVideo = isOwner ? "125" : "97"
+  payloadAudio = "111"
+  if ($("#typeAudio").val())
+    payloadAudio = $("#typeAudio").val()
+  if (isOwner && $("#typeVideo").val())
+    payloadVideo = $("#typeVideo").val()
   username = version + ":" + isOwner + ":"
   if (isOwner) {
     room = userid
@@ -109,7 +114,6 @@ function getConfigPeerConnection() {
   }
   else {
     room = session
-    payloadVideo = "97"
     username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room
   }
 
@@ -129,9 +133,9 @@ function initCall() {
   server = $("#server").val()
   port = $("#port").val()
   version = $("#version").val()
-  if(!server || server==""){
-    server= $("#servercb").val()
-    port="3010"
+  if (!server || server == "") {
+    server = $("#servercb").val()
+    port = "3010"
   }
   if (!userid || userid == "") {
     alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
@@ -174,7 +178,7 @@ function call(isowner, video, audio) {
     offerToReceiveAudio: audio,
   }
 
-  
+
   navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(function (e) {
     alert('getUserMedia() error: ' + e.name);
   });
@@ -327,32 +331,45 @@ function setLocalAndAddCandidate(sessionDescription) {
   sdpList.forEach(element => {
     var e = element;
     if (sessionDescription.type == "offer") {
-      if (e.startsWith("a=rtpmap:96") || e.startsWith("a=rtcp-fb:96")
-        || e.startsWith("a=rtpmap:97") || e.startsWith("a=fmtp:97"))
-        return;
-      if (e.startsWith("a=rtpmap:98") || e.startsWith("a=rtcp-fb:98") || e.startsWith("a=fmtp:98")
-        || e.startsWith("a=rtpmap:99") || e.startsWith("a=fmtp:99"))
-        return;
-      if (e.startsWith("a=rtpmap:100") || e.startsWith("a=rtcp-fb:100") || e.startsWith("a=fmtp:100")
-        || e.startsWith("a=rtpmap:101") || e.startsWith("a=fmtp:101"))
-        return
-      if (e.startsWith("a=rtpmap:102") || e.startsWith("a=rtcp-fb:102") || e.startsWith("a=fmtp:102")
-        || e.startsWith("a=rtpmap:123") || e.startsWith("a=fmtp:123"))
-        return
-      // if (e.startsWith("a=rtpmap:125") || e.startsWith("a=rtcp-fb:125") || e.startsWith("a=fmtp:125")
-      //     || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
-      //     return
-      if (e.startsWith("a=rtpmap:127") || e.startsWith("a=rtcp-fb:127") || e.startsWith("a=fmtp:127")
-        || e.startsWith("a=rtpmap:122") || e.startsWith("a=fmtp:122"))
-        return;
-      if (e.startsWith("a=rtpmap:108") || e.startsWith("a=rtpmap:109") || e.startsWith("a=fmtp:109")
-        || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
-        return;
-      if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
-      ) return;
+      if (e.startsWith("a=rtpmap:")) {
+        if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
+          return;
+      }
+      if (e.startsWith("a=rtcp-fb:")) {
+        if (!e.startsWith("a=rtcp-fb:" + payloadAudio) && !e.startsWith("a=rtcp-fb:" + payloadVideo))
+          return;
+      }
+      if (e.startsWith("a=fmtp:")) {
+        if (!e.startsWith("a=fmtp:" + payloadAudio) && !e.startsWith("a=fmtp:" + payloadVideo))
+          return;
+      }
 
-      if (e.startsWith("a=fmtp:125 level-asymmetr") && version == "2")
-        e = "a=fmtp:125 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+      // if (e.startsWith("a=rtpmap:96") || e.startsWith("a=rtcp-fb:96")
+      //   || e.startsWith("a=rtpmap:97") || e.startsWith("a=fmtp:97"))
+      //   return;
+      // if (e.startsWith("a=rtpmap:98") || e.startsWith("a=rtcp-fb:98") || e.startsWith("a=fmtp:98")
+      //   || e.startsWith("a=rtpmap:99") || e.startsWith("a=fmtp:99"))
+      //   return;
+      // if (e.startsWith("a=rtpmap:100") || e.startsWith("a=rtcp-fb:100") || e.startsWith("a=fmtp:100")
+      //   || e.startsWith("a=rtpmap:101") || e.startsWith("a=fmtp:101"))
+      //   return
+      // if (e.startsWith("a=rtpmap:102") || e.startsWith("a=rtcp-fb:102") || e.startsWith("a=fmtp:102")
+      //   || e.startsWith("a=rtpmap:123") || e.startsWith("a=fmtp:123"))
+      //   return
+      // // if (e.startsWith("a=rtpmap:125") || e.startsWith("a=rtcp-fb:125") || e.startsWith("a=fmtp:125")
+      // //     || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
+      // //     return
+      // if (e.startsWith("a=rtpmap:127") || e.startsWith("a=rtcp-fb:127") || e.startsWith("a=fmtp:127")
+      //   || e.startsWith("a=rtpmap:122") || e.startsWith("a=fmtp:122"))
+      //   return;
+      // if (e.startsWith("a=rtpmap:108") || e.startsWith("a=rtpmap:109") || e.startsWith("a=fmtp:109")
+      //   || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
+      //   return;
+      // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
+      // ) return;
+
+      if (e.startsWith("a=fmtp:"+payloadVideo+" level-asymmetr") && version == "2")
+        e = "a=fmtp:"+payloadVideo+" level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     }
     else {
       if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
