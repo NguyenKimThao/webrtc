@@ -270,13 +270,13 @@ function handleIceCandidate(e) {
   }
 }
 function handleIceConnectionStateChange(e) {
-  // console.log("change:", e);
+  console.log("change:", e);
   if (e.currentTarget.iceConnectionState == "failed") {
     if (myVar == null) {
-      // Restart()
-      // myVar = setInterval(function () {
-      //   Restart()
-      // }, 1000);
+      Restart()
+      myVar = setInterval(function () {
+        Restart()
+      }, 1000);
     }
 
   }
