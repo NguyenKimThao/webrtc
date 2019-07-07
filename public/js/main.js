@@ -459,6 +459,8 @@ function getAnswer(type) {
   var sessionVideo = session
   var sessionAudio = (parseInt(session) * 2).toString()
   console.log(type)
+  var ps=(version=="2")? "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+   : "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n";
   if (!type || type.audio == true && type.video == true) {
 
     sdp = "v=0\n"
@@ -505,8 +507,7 @@ function getAnswer(type) {
       + "a=rtcp-fb:" + payloadVideo + " ccm fir\n"
       + "a=rtcp-fb:" + payloadVideo + " nack\n"
       + "a=rtcp-fb:" + payloadVideo + " nack pli\n"
-      // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
-      + "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+  +ps     
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
