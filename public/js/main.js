@@ -23,6 +23,7 @@ var isAudio = false;
 var payloadAudio="111"
 var payloadVideo="125"
 var room = ""
+var stt=0
 var isOwner = 0;
 var server = ""
 var version = 0
@@ -52,7 +53,21 @@ function StopCall() {
 
 function Restart() {
   configOffer.iceRestart = true;
-  maybeStart()
+   if (version == "0") {
+    if (isOwner) {
+	    peerconnection.createOffer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
+    }
+    else {
+    }
+  }
+  else {
+    if (isOwner) {
+      peerconnection.createOffer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
+    }
+    else {
+      peerconnection.createAnswer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
+    }
+  }
 }
 
 init();
@@ -110,12 +125,13 @@ function getConfigPeerConnection() {
   username = version + ":" + isOwner + ":"
   if (isOwner) {
     room = userid
-    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room
+    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room+":"+stt
   }
   else {
     room = session
-    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room
+    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room+":"+stt
   }
+  stt=stt+1
 
 
   var pcConfig = {
@@ -135,6 +151,9 @@ function initCall() {
   version = $("#version").val()
   if (!server || server == "") {
     server = $("#servercb").val()
+    if(server=="127.0.0.1"||server=="10.199.213.101")
+      port="3010"
+    else
     port = "8010"
   }
   if (!userid || userid == "") {
@@ -271,12 +290,13 @@ function handleIceCandidate(e) {
 }
 function handleIceConnectionStateChange(e) {
   console.log("change:", e);
-  if (e.currentTarget.iceConnectionState == "failed") {
+  
+  if (e.currentTarget.iceConnectionState == "disconnected") {
     if (myVar == null) {
       Restart()
-      myVar = setInterval(function () {
-        Restart()
-      }, 1000);
+      // myVar = setInterval(function () {
+      //   Restart()
+      // }, 1000);
     }
 
   }

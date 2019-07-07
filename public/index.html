@@ -1,60 +1,61 @@
 <!DOCTYPE html>
 <html>
 
-<head>
+	<head>
 
-  <title>Realtime communication with WebRTC</title>
+		<title>Realtime communication with WebRTC</title>
 
-  <link rel="stylesheet" href="/css/main.css" />
+		<link rel="stylesheet" href="/css/main.css" />
 
-</head>
+	</head>
 
-<body>
+	<body>
 
-  <h1>Realtime communication with WebRTC</h1>
-  Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
-    <option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
-    <option value="127.0.0.1">Local(127.0.0.1)</option>
-  </select>
-  <br>
-  Server: <input type="text" id="server" value="" />
-  Port: <input type="text" id="port" value="" />
-  <br>
-  SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
-    <option value="1">Version Mobile Moi</option>
-    <option value="0">Web</option>
-    <option value="2">Version Mobile Cu</option>
-  </select>
-  <br>
-  PayloadTypeAudio <input type="text" id="typeAudio" value="111" />
-  <br>
-  PayloadTypeVideo <input type="text" id="typeVideo" value="125" />
-  <br>
-  <br>
-  <button onclick="Reset()">Reset</button>
-  <button onclick="Restart()">Restart</button>
-  <button onclick="StopCall()">Stop</button>
-  <br>
-  <br>
-  <button onclick="CallAudio()" id="callaudio">Call Audio</button>
-  <button onclick="CallVideo()" id="callvideo">Call Video</button>
-  <br>
-  <br>
-  <button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
-  <button onclick="JoinVideo()" id="joinvideo">Join Video</button>
-  <br>
-  userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled /><br>
-  PeerID: <input type="text" id="session" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
-  <div id="videos">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
-  <!-- This file is automatically added/served when running "node index.js". -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="js/adapter-latest.js"></script>
-  <script src="js/jquery-3.4.0.min.js"></script>
-  <script src="js/main.js"></script>
+		<h1>Realtime communication with WebRTC</h1>
+		Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
+			<option value="10.199.213.101">PC(10.199.213.101)</option>
+			<option value="127.0.0.1">Local(127.0.0.1)</option>
+			<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
+		</select>
+		<br>
+		Server: <input type="text" id="server" value="" />
+		Port: <input type="text" id="port" value="" />
+		<br>
+		SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
+			<option value="1">Version Mobile Moi</option>
+			<option value="0">Web</option>
+			<option value="2">Version Mobile Cu</option>
+		</select>
+		<br>
+		PayloadTypeAudio <input type="text" id="typeAudio" value="111" />
+		<br>
+		PayloadTypeVideo <input type="text" id="typeVideo" value="125" />
+		<br>
+		<br>
+		<button onclick="Reset()">Reset</button>
+		<button onclick="Restart()">Restart</button>
+		<button onclick="StopCall()">Stop</button>
+		<br>
+		<br>
+		<button onclick="CallAudio()" id="callaudio">Call Audio</button>
+		<button onclick="CallVideo()" id="callvideo">Call Video</button>
+		<br>
+		<br>
+		<button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
+		<button onclick="JoinVideo()" id="joinvideo">Join Video</button>
+		<br>
+		userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled /><br>
+		PeerID: <input type="text" id="session" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
+		<div id="videos">
+			<video id="localVideo" autoplay muted playsinline></video>
+			<video id="remoteVideo" autoplay playsinline></video>
+		</div>
+		<!-- This file is automatically added/served when running "node index.js". -->
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="js/adapter-latest.js"></script>
+		<script src="js/jquery-3.4.0.min.js"></script>
+		<script src="js/main.js"></script>
 
-</body>
+	</body>
 
 </html>
