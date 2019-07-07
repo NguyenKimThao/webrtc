@@ -53,6 +53,7 @@ function StopCall() {
 
 function Restart() {
   configOffer.iceRestart = true;
+  peerconnection.setConfiguration(getConfigPeerConnection())
    if (version == "0") {
     if (isOwner) {
 	    peerconnection.createOffer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
