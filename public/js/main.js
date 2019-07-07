@@ -301,9 +301,9 @@ function handleIceConnectionStateChange(e) {
   if (e.currentTarget.iceConnectionState == "disconnected") {
     if (myVar == null) {
       Restart()
-      // myVar = setInterval(function () {
-      //   Restart()
-      // }, 1000);
+      myVar = setInterval(function () {
+        Restart()
+      }, 5000);
     }
 
   }
