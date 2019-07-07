@@ -20,10 +20,10 @@ var peerconnection = null;
 var remoteStream = null;
 var isVideo = false;
 var isAudio = false;
-var payloadAudio="111"
-var payloadVideo="125"
+var payloadAudio = "111"
+var payloadVideo = "125"
 var room = ""
-var stt=0
+var stt = 0
 var isOwner = 0;
 var server = ""
 var version = 0
@@ -53,10 +53,13 @@ function StopCall() {
 
 function Restart() {
   configOffer.iceRestart = true;
-  peerconnection.setConfiguration(getConfigPeerConnection())
-   if (version == "0") {
+  var pcConfig = getConfigPeerConnection()
+  if (!pcConfig)
+    return;
+  peerconnection.setConfiguration(pcConfig)
+  if (version == "0") {
     if (isOwner) {
-	    peerconnection.createOffer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
+      peerconnection.createOffer(configOffer).then(setLocalAndSendMessage, handleCreateOfferError);
     }
     else {
     }
@@ -66,6 +69,9 @@ function Restart() {
       peerconnection.createOffer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
     }
     else {
+      var offer = getOffer(constraints)
+      console.log(offer);
+      peerconnection.setRemoteDescription(offer)
       peerconnection.createAnswer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
     }
   }
@@ -126,13 +132,13 @@ function getConfigPeerConnection() {
   username = version + ":" + isOwner + ":"
   if (isOwner) {
     room = userid
-    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room+":"+stt
+    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room + ":" + stt
   }
   else {
     room = session
-    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room+":"+stt
+    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room + ":" + stt
   }
-  stt=stt+1
+  stt = stt + 1
 
 
   var pcConfig = {
@@ -152,10 +158,10 @@ function initCall() {
   version = $("#version").val()
   if (!server || server == "") {
     server = $("#servercb").val()
-    if(server=="127.0.0.1"||server=="10.199.213.101")
-      port="3010"
+    if (server == "127.0.0.1" || server == "10.199.213.101")
+      port = "3010"
     else
-    port = "8010"
+      port = "8010"
   }
   if (!userid || userid == "") {
     alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
@@ -291,7 +297,7 @@ function handleIceCandidate(e) {
 }
 function handleIceConnectionStateChange(e) {
   console.log("change:", e);
-  
+
   if (e.currentTarget.iceConnectionState == "disconnected") {
     if (myVar == null) {
       Restart()
@@ -389,8 +395,8 @@ function setLocalAndAddCandidate(sessionDescription) {
       // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
       // ) return;
 
-      if (e.startsWith("a=fmtp:"+payloadVideo+" level-asymmetr") && version == "2")
-        e = "a=fmtp:"+payloadVideo+" level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+      if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "2")
+        e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     }
     else {
       if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
@@ -480,7 +486,7 @@ function getAnswer(type) {
       + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
       + "a=ssrc:" + sessionAudio + " label:video_label\n"
-      + "m=video 9 UDP/TLS/RTP/SAVPF "+payloadVideo+"\n"
+      + "m=video 9 UDP/TLS/RTP/SAVPF " + payloadVideo + "\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
       + "a=ice-ufrag:local\n"
@@ -493,14 +499,14 @@ function getAnswer(type) {
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
       + "a=rtcp-rsize\n"
-      + "a=rtpmap:"+payloadVideo+" H264/90000\n"
-      + "a=rtcp-fb:"+payloadVideo+" goog-remb\n"
-      + "a=rtcp-fb:"+payloadVideo+" transport-cc\n"
-      + "a=rtcp-fb:"+payloadVideo+" ccm fir\n"
-      + "a=rtcp-fb:"+payloadVideo+" nack\n"
-      + "a=rtcp-fb:"+payloadVideo+" nack pli\n"
+      + "a=rtpmap:" + payloadVideo + " H264/90000\n"
+      + "a=rtcp-fb:" + payloadVideo + " goog-remb\n"
+      + "a=rtcp-fb:" + payloadVideo + " transport-cc\n"
+      + "a=rtcp-fb:" + payloadVideo + " ccm fir\n"
+      + "a=rtcp-fb:" + payloadVideo + " nack\n"
+      + "a=rtcp-fb:" + payloadVideo + " nack pli\n"
       // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
-      + "a=fmtp:"+payloadVideo+" level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+      + "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
