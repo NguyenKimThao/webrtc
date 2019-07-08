@@ -23,7 +23,7 @@ var isAudio = false;
 var payloadAudio = "111"
 var payloadVideo = "125"
 var room = ""
-var stt = 0
+var stt = 1
 var isOwner = 0;
 var server = ""
 var version = 0
@@ -72,7 +72,7 @@ function Restart() {
       var offer = getOffer(constraints)
       console.log(offer);
       peerconnection.setRemoteDescription(offer)
-      peerconnection.createAnswer(configOffer).then(setLocalAndAddCandidate, handleCreateOfferError);
+      peerconnection.createAnswer().then(setLocalAndAddCandidate, handleCreateOfferError);
     }
   }
 }
@@ -130,6 +130,8 @@ function getConfigPeerConnection() {
   if (isOwner && $("#typeVideo").val())
     payloadVideo = $("#typeVideo").val()
   username = version + ":" + isOwner + ":"
+  stt = stt + 1
+
   if (isOwner) {
     room = userid
     username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room + ":" + stt
@@ -138,7 +140,6 @@ function getConfigPeerConnection() {
     room = session
     username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room + ":" + stt
   }
-  stt = stt + 1
 
 
   var pcConfig = {
@@ -238,7 +239,7 @@ function getSession() {
 
 function getRTCIceCandidate() {
 
-  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag " + "local" + " network-id 1"
+  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag " + "local"+stt + " network-id 1"
   var candidate = new RTCIceCandidate({
     sdpMLineIndex: 0,
     candidate: candidateStr
@@ -361,9 +362,14 @@ function setLocalAndAddCandidate(sessionDescription) {
   var ssrcVideo = ""
   var ssrcVoice = ""
   var dem = 0
+  var oOffer=""
   sdpList.forEach(element => {
     var e = element;
     if (sessionDescription.type == "offer") {
+      if (e.startsWith("o=")) {
+        oOffer = e.split(" ")[1]
+      }
+
       if (e.startsWith("a=rtpmap:")) {
         if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
           return;
@@ -435,7 +441,7 @@ function setLocalAndAddCandidate(sessionDescription) {
   console.log('Offer sending message', sessionDescription);
   peerconnection.setLocalDescription(sessionDescription);
   if (sessionDescription.type == "offer") {
-    var message = getAnswer(constraints)
+    var message = getAnswer(constraints,oOffer)
     console.log('getAnswer sending message', message);
     peerconnection.setRemoteDescription(new RTCSessionDescription(message))
   }
@@ -460,7 +466,7 @@ function handleCreateOfferError(event) {
 /////////////////////////////////////////////////////
 
 
-function getAnswer(type) {
+function getAnswer(type,o) {
   var sdp = ""
   var sessionVideo = session
   var sessionAudio = (parseInt(session) * 2).toString()
@@ -470,7 +476,7 @@ function getAnswer(type) {
   if (!type || type.audio == true && type.video == true) {
 
     sdp = "v=0\n"
-      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+      + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
       + "s=-\n"
       + "t=0 0\n"
       + "a=group:BUNDLE audio video\n"
@@ -478,7 +484,7 @@ function getAnswer(type) {
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local\n"
+      + "a=ice-ufrag:local"+stt+"\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -497,7 +503,7 @@ function getAnswer(type) {
       + "m=video 9 UDP/TLS/RTP/SAVPF " + payloadVideo + "\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local\n"
+      + "a=ice-ufrag:local"+stt+"\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -522,7 +528,7 @@ function getAnswer(type) {
   else
     if (type.video)
       sdp = "v=0\n"
-        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+        + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
         + "s=-\n"
         + "t=0 0\n"
         + "a=group:BUNDLE video\n"
@@ -530,7 +536,7 @@ function getAnswer(type) {
         + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
         + "c=IN IP4 0.0.0.0\n"
         + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:local\n"
+        + "a=ice-ufrag:local"+stt+"\n"
         + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -555,7 +561,7 @@ function getAnswer(type) {
     else
       if (type.audio)
         sdp = "v=0\n"
-          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+          + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
           + "s=-\n"
           + "t=0 0\n"
           + "a=group:BUNDLE audio\n"
@@ -563,7 +569,7 @@ function getAnswer(type) {
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
           + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:local\n"
+          + "a=ice-ufrag:local"+stt+"\n"
           + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -592,7 +598,7 @@ function getOffer(type) {
   if (!type || type.audio == true && type.video == true) {
 
     sdp = "v=0\n"
-      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+      + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
       + "s=-\n"
       + "t=0 0\n"
       + "a=group:BUNDLE audio video\n"
@@ -600,7 +606,7 @@ function getOffer(type) {
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local\n"
+      + "a=ice-ufrag:local"+stt+"\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -619,7 +625,7 @@ function getOffer(type) {
       + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local\n"
+      + "a=ice-ufrag:local"+stt+"\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -645,7 +651,7 @@ function getOffer(type) {
   else
     if (type.video)
       sdp = "v=0\n"
-        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+        + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
         + "s=-\n"
         + "t=0 0\n"
         + "a=group:BUNDLE video\n"
@@ -653,7 +659,7 @@ function getOffer(type) {
         + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
         + "c=IN IP4 0.0.0.0\n"
         + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:local\n"
+        + "a=ice-ufrag:local"+stt+"\n"
         + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -680,7 +686,7 @@ function getOffer(type) {
 
       if (type.audio)
         sdp = "v=0\n"
-          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
+          + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
           + "s=-\n"
           + "t=0 0\n"
           + "a=group:BUNDLE audio\n"
@@ -688,7 +694,7 @@ function getOffer(type) {
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
           + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:local\n"
+          + "a=ice-ufrag:local"+stt+"\n"
           + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
