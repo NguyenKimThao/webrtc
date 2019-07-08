@@ -223,9 +223,14 @@ function gotStream(stream) {
 
 }
 function getSession() {
-  $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
-    var dataRes = JSON.parse(res)
-    userid = dataRes.data.id;
+  // $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
+  //   var dataRes = JSON.parse(res)
+  //   userid = dataRes.data.id;
+  //   $("#session").val(userid);
+  //   $("#userid").val(userid)
+  // })
+  $.get("/genuid", function (res) {
+    userid = res.data.id;
     $("#session").val(userid);
     $("#userid").val(userid)
   });
@@ -287,6 +292,7 @@ var myVar = null;
 function handleIceCandidate(e) {
   if (e.candidate && e.candidate.type == "relay") {
     console.log("handleIceCandidate:", e);
+	if(version=="0")
     sendMessage({
       type: 'candidate',
       label: event.candidate.sdpMLineIndex,

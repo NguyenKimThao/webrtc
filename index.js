@@ -7,7 +7,7 @@ var socketIO = require('socket.io');
 var express = require('express');
 var https = require('https');
 var fs = require('fs');
-
+var id=0
 // This line is from the Node.js HTTPS documentation.
 var options = {
   key: fs.readFileSync('./key.pem'),
@@ -25,9 +25,16 @@ var appHttp = http.Server(app).listen(port);
 // var appHttps = https.createServer(options, function (req, res) {
 //   fileServer.serve(req, res);
 // }).listen(port);
+
+app.use("/genuid", function (rep, res) {
+  id=id+1
+  res.json({"err":0,"data":{"id":id}})
+})
+
 app.use("/", function (rep, res) {
   res.sendfile("./public/index.html");
 })
+
 var io = socketIO.listen(appHttp);
 
 io.sockets.on('connection', function (socket) {
