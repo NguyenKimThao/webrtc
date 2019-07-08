@@ -367,7 +367,7 @@ function setLocalAndAddCandidate(sessionDescription) {
     var e = element;
     if (sessionDescription.type == "offer") {
       if (e.startsWith("o=")) {
-        oOffer = e.split(" ")[1]
+        oOffer = e.split(" ")[2]
       }
 
       if (e.startsWith("a=rtpmap:")) {
