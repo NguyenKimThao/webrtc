@@ -363,13 +363,15 @@ function setLocalAndAddCandidate(sessionDescription) {
   var ssrcVoice = ""
   var dem = 0
   var oOffer=""
+  var bundle=[]
   sdpList.forEach(element => {
     var e = element;
     if (sessionDescription.type == "offer") {
       if (e.startsWith("o=")) {
         oOffer = e.split(" ")[2]
       }
-
+      if(e.startsWith("a=group:BUNDLE"))
+        bundle= e.split(" ")
       if (e.startsWith("a=rtpmap:")) {
         if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
           return;
@@ -441,7 +443,7 @@ function setLocalAndAddCandidate(sessionDescription) {
   console.log('Offer sending message', sessionDescription);
   peerconnection.setLocalDescription(sessionDescription);
   if (sessionDescription.type == "offer") {
-    var message = getAnswer(constraints,oOffer)
+    var message = getAnswer(constraints,oOffer,bundle)
     console.log('getAnswer sending message', message);
     peerconnection.setRemoteDescription(new RTCSessionDescription(message))
   }
@@ -466,7 +468,7 @@ function handleCreateOfferError(event) {
 /////////////////////////////////////////////////////
 
 
-function getAnswer(type,o) {
+function getAnswer(type,o,bundle) {
   var sdp = ""
   var sessionVideo = session
   var sessionAudio = (parseInt(session) * 2).toString()
@@ -479,7 +481,7 @@ function getAnswer(type,o) {
       + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
       + "s=-\n"
       + "t=0 0\n"
-      + "a=group:BUNDLE 0 1\n"
+      + "a=group:BUNDLE "+bundle[1]+" "+bundle[2]+"\n"
       + "a=msid-semantic: WMS stream_id\n"
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
@@ -489,7 +491,7 @@ function getAnswer(type,o) {
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
       + "a=setup:active\n"
-      + "a=mid:0\n"
+      + "a=mid:"+bundle[1]+"\n"
       + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
@@ -508,7 +510,7 @@ function getAnswer(type,o) {
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
       + "a=setup:active\n"
-      + "a=mid:1\n"
+      + "a=mid:"+bundle[2]+"\n"
       + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
@@ -531,7 +533,7 @@ function getAnswer(type,o) {
         + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
         + "s=-\n"
         + "t=0 0\n"
-        + "a=group:BUNDLE video\n"
+        + "a=group:BUNDLE "+bundle[1]+"\n"
         + "a=msid-semantic: WMS stream_id\n"
         + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
         + "c=IN IP4 0.0.0.0\n"
@@ -541,7 +543,7 @@ function getAnswer(type,o) {
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
         + "a=setup:active\n"
-        + "a=mid:video\n"
+        + "a=mid:"+bundle[1]+"\n"
         + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
         + "a=sendrecv\n"
         + "a=rtcp-mux\n"
@@ -564,7 +566,7 @@ function getAnswer(type,o) {
           + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
           + "s=-\n"
           + "t=0 0\n"
-          + "a=group:BUNDLE audio\n"
+          + "a=group:BUNDLE "+bundle[1]+"\n"
           + "a=msid-semantic: WMS stream_id\n"
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
@@ -574,7 +576,7 @@ function getAnswer(type,o) {
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
           + "a=setup:active\n"
-          + "a=mid:audio\n"
+          + "a=mid:"+bundle[1]+"\n"
           + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
           + "a=sendrecv\n"
           + "a=rtcp-mux\n"
