@@ -408,7 +408,7 @@ function setLocalAndAddCandidate(sessionDescription) {
       //   return;
       // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
       // ) return;
-      if(e.indexof("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f")>1){
+      if(e.indexOf("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f")>1){
         var sl= e.split(" ")[0]
         payloadVideo=sl.split(":")[1]
       }
