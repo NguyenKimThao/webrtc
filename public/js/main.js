@@ -239,7 +239,7 @@ function getSession() {
 
 function getRTCIceCandidate() {
 
-  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag " + "local"+stt + " network-id 1"
+  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag " + "local" + stt + " network-id 1"
   var candidate = new RTCIceCandidate({
     sdpMLineIndex: 0,
     candidate: candidateStr
@@ -293,13 +293,13 @@ var myVar = null;
 function handleIceCandidate(e) {
   if (e.candidate && e.candidate.type == "relay") {
     console.log("handleIceCandidate:", e);
-	if(version=="0")
-    sendMessage({
-      type: 'candidate',
-      label: event.candidate.sdpMLineIndex,
-      id: event.candidate.sdpMid,
-      candidate: event.candidate.candidate
-    });
+    if (version == "0")
+      sendMessage({
+        type: 'candidate',
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate
+      });
   }
 }
 function handleIceConnectionStateChange(e) {
@@ -362,16 +362,16 @@ function setLocalAndAddCandidate(sessionDescription) {
   var ssrcVideo = ""
   var ssrcVoice = ""
   var dem = 0
-  var oOffer=""
-  var bundle=[]
+  var oOffer = ""
+  var bundle = []
   sdpList.forEach(element => {
     var e = element;
     if (sessionDescription.type == "offer") {
       if (e.startsWith("o=")) {
         oOffer = e.split(" ")[2]
       }
-      if(e.startsWith("a=group:BUNDLE"))
-        bundle= e.split(" ")
+      if (e.startsWith("a=group:BUNDLE"))
+        bundle = e.split(" ")
       if (e.startsWith("a=rtpmap:")) {
         if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
           return;
@@ -408,16 +408,21 @@ function setLocalAndAddCandidate(sessionDescription) {
       //   return;
       // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
       // ) return;
-      if(e.indexOf("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f")>1){
-        var sl= e.split(" ")[0]
-        payloadVideo=sl.split(":")[1]
+      if (e.indexOf("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f") > 1) {
+        var sl = e.split(" ")[0]
+        payloadVideo = sl.split(":")[1]
       }
       if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "2")
         e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+      if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "3")
+        e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
+
     }
     else {
       if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
         e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+      if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "3")
+        e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
     }
     if (e.startsWith("a=ice-pwd:"))
       e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
@@ -446,7 +451,7 @@ function setLocalAndAddCandidate(sessionDescription) {
   console.log('Offer sending message', sessionDescription);
   peerconnection.setLocalDescription(sessionDescription);
   if (sessionDescription.type == "offer") {
-    var message = getAnswer(constraints,oOffer,bundle)
+    var message = getAnswer(constraints, oOffer, bundle)
     console.log('getAnswer sending message', message);
     peerconnection.setRemoteDescription(new RTCSessionDescription(message))
   }
@@ -471,30 +476,30 @@ function handleCreateOfferError(event) {
 /////////////////////////////////////////////////////
 
 
-function getAnswer(type,o,bundle) {
+function getAnswer(type, o, bundle) {
   var sdp = ""
   var sessionVideo = session
   var sessionAudio = (parseInt(session) * 2).toString()
   console.log(type)
-  var ps = (version != "2") ? "a=fmtp:"+payloadVideo+" level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+  var ps = (version != "2") ? "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
     : "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n";
   if (!type || type.audio == true && type.video == true) {
 
     sdp = "v=0\n"
-      + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
+      + "o=- 1443513048222864666 " + o + " IN IP4 127.0.0.1\n"
       + "s=-\n"
       + "t=0 0\n"
-      + "a=group:BUNDLE "+bundle[1]+" "+bundle[2]+"\n"
+      + "a=group:BUNDLE " + bundle[1] + " " + bundle[2] + "\n"
       + "a=msid-semantic: WMS stream_id\n"
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local"+stt+"\n"
+      + "a=ice-ufrag:local" + stt + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
       + "a=setup:active\n"
-      + "a=mid:"+bundle[1]+"\n"
+      + "a=mid:" + bundle[1] + "\n"
       + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
@@ -508,12 +513,12 @@ function getAnswer(type,o,bundle) {
       + "m=video 9 UDP/TLS/RTP/SAVPF " + payloadVideo + "\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local"+stt+"\n"
+      + "a=ice-ufrag:local" + stt + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
       + "a=setup:active\n"
-      + "a=mid:"+bundle[2]+"\n"
+      + "a=mid:" + bundle[2] + "\n"
       + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
@@ -533,20 +538,20 @@ function getAnswer(type,o,bundle) {
   else
     if (type.video)
       sdp = "v=0\n"
-        + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
+        + "o=- 1443513048222864666 " + o + " IN IP4 127.0.0.1\n"
         + "s=-\n"
         + "t=0 0\n"
-        + "a=group:BUNDLE "+bundle[1]+"\n"
+        + "a=group:BUNDLE " + bundle[1] + "\n"
         + "a=msid-semantic: WMS stream_id\n"
         + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
         + "c=IN IP4 0.0.0.0\n"
         + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:local"+stt+"\n"
+        + "a=ice-ufrag:local" + stt + "\n"
         + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
         + "a=setup:active\n"
-        + "a=mid:"+bundle[1]+"\n"
+        + "a=mid:" + bundle[1] + "\n"
         + "a=extmap:14 http://www.webrtc.org/experiments/rtp-hdrext/generic-frame-descriptor-00\n"
         + "a=sendrecv\n"
         + "a=rtcp-mux\n"
@@ -566,20 +571,20 @@ function getAnswer(type,o,bundle) {
     else
       if (type.audio)
         sdp = "v=0\n"
-          + "o=- 1443513048222864666 "+o+" IN IP4 127.0.0.1\n"
+          + "o=- 1443513048222864666 " + o + " IN IP4 127.0.0.1\n"
           + "s=-\n"
           + "t=0 0\n"
-          + "a=group:BUNDLE "+bundle[1]+"\n"
+          + "a=group:BUNDLE " + bundle[1] + "\n"
           + "a=msid-semantic: WMS stream_id\n"
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
           + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:local"+stt+"\n"
+          + "a=ice-ufrag:local" + stt + "\n"
           + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
           + "a=setup:active\n"
-          + "a=mid:"+bundle[1]+"\n"
+          + "a=mid:" + bundle[1] + "\n"
           + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
           + "a=sendrecv\n"
           + "a=rtcp-mux\n"
@@ -603,7 +608,7 @@ function getOffer(type) {
   if (!type || type.audio == true && type.video == true) {
 
     sdp = "v=0\n"
-      + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
+      + "o=- 1443513048222864666 " + stt + " IN IP4 127.0.0.1\n"
       + "s=-\n"
       + "t=0 0\n"
       + "a=group:BUNDLE audio video\n"
@@ -611,7 +616,7 @@ function getOffer(type) {
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local"+stt+"\n"
+      + "a=ice-ufrag:local" + stt + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -630,7 +635,7 @@ function getOffer(type) {
       + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:local"+stt+"\n"
+      + "a=ice-ufrag:local" + stt + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -656,7 +661,7 @@ function getOffer(type) {
   else
     if (type.video)
       sdp = "v=0\n"
-        + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
+        + "o=- 1443513048222864666 " + stt + " IN IP4 127.0.0.1\n"
         + "s=-\n"
         + "t=0 0\n"
         + "a=group:BUNDLE video\n"
@@ -664,7 +669,7 @@ function getOffer(type) {
         + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
         + "c=IN IP4 0.0.0.0\n"
         + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:local"+stt+"\n"
+        + "a=ice-ufrag:local" + stt + "\n"
         + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -691,7 +696,7 @@ function getOffer(type) {
 
       if (type.audio)
         sdp = "v=0\n"
-          + "o=- 1443513048222864666 "+stt+" IN IP4 127.0.0.1\n"
+          + "o=- 1443513048222864666 " + stt + " IN IP4 127.0.0.1\n"
           + "s=-\n"
           + "t=0 0\n"
           + "a=group:BUNDLE audio\n"
@@ -699,7 +704,7 @@ function getOffer(type) {
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
           + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:local"+stt+"\n"
+          + "a=ice-ufrag:local" + stt + "\n"
           + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -727,23 +732,23 @@ function getOffer(type) {
 function getStats(pc) {
   var rest = 0;
   window.setInterval(function () {
-      pc.getStats(null).then(stats => {
-          let statsOutput = "";
-          for (var report in stats) {
-              statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
-                  `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
-              console.log(report,statsOutput);
-              // Now the statistics for this report; we intentially drop the ones we
-              // sorted to the top above
+    pc.getStats(null).then(stats => {
+      let statsOutput = "";
+      for (var report in stats) {
+        statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
+          `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
+        console.log(report, statsOutput);
+        // Now the statistics for this report; we intentially drop the ones we
+        // sorted to the top above
 
-              // Object.keys(report).forEach(statName => {
-              //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
-              //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
-              //     console.log(statsOutput)
-              //   }
-              // });
-          }
-      });
+        // Object.keys(report).forEach(statName => {
+        //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
+        //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
+        //     console.log(statsOutput)
+        //   }
+        // });
+      }
+    });
 
   }, 1000);
 }
