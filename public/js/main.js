@@ -408,7 +408,10 @@ function setLocalAndAddCandidate(sessionDescription) {
       //   return;
       // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
       // ) return;
-
+      if(e.indexof("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f")>1){
+        var sl= e.split(" ")[0]
+        payloadVideo=sl.split(":")[1]
+      }
       if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "2")
         e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     }
@@ -718,4 +721,29 @@ function getOffer(type) {
           + "a=ssrc:" + sessionAudio + " label:video_label\n"
   var message = { sdp: sdp, type: "offer" };
   return message
+}
+
+
+function getStats(pc) {
+  var rest = 0;
+  window.setInterval(function () {
+      pc.getStats(null).then(stats => {
+          let statsOutput = "";
+          for (var report in stats) {
+              statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
+                  `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
+              console.log(report,statsOutput);
+              // Now the statistics for this report; we intentially drop the ones we
+              // sorted to the top above
+
+              // Object.keys(report).forEach(statName => {
+              //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
+              //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
+              //     console.log(statsOutput)
+              //   }
+              // });
+          }
+      });
+
+  }, 1000);
 }
