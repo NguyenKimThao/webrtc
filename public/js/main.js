@@ -530,10 +530,15 @@ function getAnswer(type, o, bundle) {
       + "a=rtcp-fb:" + payloadVideo + " nack\n"
       + "a=rtcp-fb:" + payloadVideo + " nack pli\n"
       + ps
+      + "a=ssrc-group:FID "+sessionVideo+" 123\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
       + "a=ssrc:" + sessionVideo + " label:video_label\n"
+      + "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + 123 + " msid:stream_id video_label\n"
+      + "a=ssrc:" + 123 + " mslabel:stream_id\n"
+      + "a=ssrc:" + 123 + " label:video_label\n"
   }
   else
     if (type.video)
@@ -653,10 +658,15 @@ function getOffer(type) {
       + "a=rtcp-fb:97 nack pli\n"
       // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
       + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+      + "a=ssrc-group:FID "+sessionVideo+" 123\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
       + "a=ssrc:" + sessionVideo + " label:video_label\n"
+      + "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n"
+      + "a=ssrc:" + 123 + " msid:stream_id video_label\n"
+      + "a=ssrc:" + 123 + " mslabel:stream_id\n"
+      + "a=ssrc:" + 123 + " label:video_label\n"
   }
   else
     if (type.video)
