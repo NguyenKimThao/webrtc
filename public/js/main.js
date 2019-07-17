@@ -31,7 +31,7 @@ var port = 0
 function stop() {
   $("#callaudio").prop('disabled', false);
   $("#callvideo").prop('disabled', false);
-  $("#joinvideo").prop('disabled', false);
+  $("#joinaudio").prop('disabled', false);
   $("#joinvideo").prop('disabled', false);
   if (peerconnection)
     peerconnection.close();
@@ -361,6 +361,7 @@ function setLocalAndAddCandidate(sessionDescription) {
   var res = "";
   var ssrcVideo = ""
   var ssrcVoice = ""
+  var ssrcPLI = ""
   var dem = 0
   var oOffer = ""
   var bundle = []
@@ -439,6 +440,12 @@ function setLocalAndAddCandidate(sessionDescription) {
         ssrcVideo = s
         dem = 2;
       }
+      if (dem == 2) {
+        if (s != ssrcVideo) {
+          ssrcPLI = s
+          dem = 3;
+        }
+      }
     }
     res = res + e + "\n";
   });
@@ -447,6 +454,8 @@ function setLocalAndAddCandidate(sessionDescription) {
     res = res.replace(new RegExp(ssrcVoice, 'g'), (parseInt(userid) * 2).toString());
   if (ssrcVideo != "")
     res = res.replace(new RegExp(ssrcVideo, 'g'), userid);
+  if (ssrcPLI != "")
+    res = res.replace(new RegExp(ssrcPLI, 'g'), "456");
   sessionDescription.sdp = res.substr(0, res.length - 1);
   console.log('Offer sending message', sessionDescription);
   peerconnection.setLocalDescription(sessionDescription);
@@ -530,7 +539,7 @@ function getAnswer(type, o, bundle) {
       + "a=rtcp-fb:" + payloadVideo + " nack\n"
       + "a=rtcp-fb:" + payloadVideo + " nack pli\n"
       + ps
-      + "a=ssrc-group:FID "+sessionVideo+" 123\n"
+      + "a=ssrc-group:FID " + sessionVideo + " 123\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
@@ -637,7 +646,7 @@ function getOffer(type) {
       + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
       + "a=ssrc:" + sessionAudio + " label:video_label\n"
-      + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+      + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
       + "a=ice-ufrag:local" + stt + "\n"
@@ -658,7 +667,9 @@ function getOffer(type) {
       + "a=rtcp-fb:97 nack pli\n"
       // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
       + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
-      + "a=ssrc-group:FID "+sessionVideo+" 123\n"
+      + "a=rtpmap:107 rtx/90000\n"
+      + "a=fmtp:107 apt=97\n"
+      + "a=ssrc-group:FID " + sessionVideo + " 123\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
