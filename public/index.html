@@ -15,26 +15,22 @@
 		Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
 			<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
 			<option value="127.0.0.1">Local(127.0.0.1)</option>
-			<option value="10.199.213.101">PC(10.199.213.101)</option>
 		</select>
 		<br>
 		Server: <input type="text" id="server" value="" />
+		<br>
 		Port: <input type="text" id="port" value="" />
 		<br>
 		SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
-			<option value="2">Version Cu</option>
-			<option value="1">Version Moi</option>
 			<option value="0">Web</option>
+			<option value="2">PC</option>
 		</select>
 		<br>
-		PayloadTypeAudio <input type="text" id="typeAudio" value="111" />
+		<input type="hidden" id="typeAudio" value="111"/>
 		<br>
-		PayloadTypeVideo <input type="text" id="typeVideo" value="125" />
-		<br>
-		<br>
+		<input type="hidden" id="typeVideo" value="125" />
 		<button onclick="Reset()">Reset</button>
-		<button onclick="Restart()">Restart</button>
-		<button onclick="StopCall()">Stop</button>
+		<!-- <button onclick="Restart()">Restart</button> -->
 		<br>
 		<br>
 		<button onclick="CallAudio()" id="callaudio">Call Audio</button>
