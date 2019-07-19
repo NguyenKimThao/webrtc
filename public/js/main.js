@@ -402,7 +402,7 @@ function setLocalAndAddCandidate(sessionDescription) {
         if (!e.startsWith("a=fmtp:" + payloadAudio) && !e.startsWith("a=fmtp:" + payloadVideo))
           return;
       }
-      if (e.indexOf("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f") > 1) {
+      if (e.indexOf("packetization-mode=0") > 1 && e.indexOf("profile-level-id=42e01f") > 1) {
         var sl = e.split(" ")[0]
         payloadVideo = sl.split(":")[1]
       }
