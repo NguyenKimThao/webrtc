@@ -384,64 +384,68 @@ function setLocalAndAddCandidate(sessionDescription) {
   var bundle = []
   sdpList.forEach(element => {
     var e = element;
-    if (sessionDescription.type == "offer") {
-      if (e.startsWith("o=")) {
-        oOffer = e.split(" ")[2]
-      }
-      if (e.startsWith("a=group:BUNDLE"))
-        bundle = e.split(" ")
-      if (e.startsWith("a=rtpmap:")) {
-        if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
-          return;
-      }
-      if (e.startsWith("a=rtcp-fb:")) {
-        if (!e.startsWith("a=rtcp-fb:" + payloadAudio) && !e.startsWith("a=rtcp-fb:" + payloadVideo))
-          return;
-      }
-      if (e.startsWith("a=fmtp:")) {
-        if (!e.startsWith("a=fmtp:" + payloadAudio) && !e.startsWith("a=fmtp:" + payloadVideo))
-          return;
-      }
-      if (e.indexOf("packetization-mode=0") > 1 && e.indexOf("profile-level-id=42e01f") > 1) {
-        var sl = e.split(" ")[0]
-        payloadVideo = sl.split(":")[1]
-      }
-      if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "2")
-        e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
-      if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "3")
-        e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
+    if (e.indexOf("packetization-mode=0") > 1 && e.indexOf("profile-level-id=42e01f") > 1) {
+      var sl = e.split(" ")[0]
+      payloadVideo = sl.split(":")[1]
+    }
+  });
 
-    }
-    else {
-      if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
-        e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
-      if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "3")
-        e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
-    }
-    if (e.startsWith("a=ice-pwd:"))
-      e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
-    if (e.startsWith("m=audio"))
-      dem = 0
-    if (e.startsWith("m=video"))
-      dem = 1
-    if (e.startsWith("a=ssrc:")) {
-      var eS = e.split(" ")[0]
-      var s = eS.split(":")[1]
-      if (dem == 0)
-        ssrcVoice = s
-      if (dem == 1) {
-        ssrcVideo = s
-        dem = 2;
+  sdpList.forEach(element => {
+      var e = element;
+      if (sessionDescription.type == "offer") {
+        if (e.startsWith("o=")) {
+          oOffer = e.split(" ")[2]
+        }
+        if (e.startsWith("a=group:BUNDLE"))
+          bundle = e.split(" ")
+        if (e.startsWith("a=rtpmap:")) {
+          if (!e.startsWith("a=rtpmap:" + payloadAudio) && !e.startsWith("a=rtpmap:" + payloadVideo))
+            return;
+        }
+        if (e.startsWith("a=rtcp-fb:")) {
+          if (!e.startsWith("a=rtcp-fb:" + payloadAudio) && !e.startsWith("a=rtcp-fb:" + payloadVideo))
+            return;
+        }
+        if (e.startsWith("a=fmtp:")) {
+          if (!e.startsWith("a=fmtp:" + payloadAudio) && !e.startsWith("a=fmtp:" + payloadVideo))
+            return;
+        }
+        if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "2")
+          e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+        if (e.startsWith("a=fmtp:" + payloadVideo + " level-asymmetr") && version == "3")
+          e = "a=fmtp:" + payloadVideo + " level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
+
       }
-      if (dem == 2) {
-        if (s != ssrcVideo) {
-          ssrcPLI = s
-          dem = 3;
+      else {
+        if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "2")
+          e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+        if (e.startsWith("a=fmtp:97 level-asymmetr") && version == "3")
+          e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oPDf5IQAAAAwBAAK/IA8YMqA==,aM48gA=="
+      }
+      if (e.startsWith("a=ice-pwd:"))
+        e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
+      if (e.startsWith("m=audio"))
+        dem = 0
+      if (e.startsWith("m=video"))
+        dem = 1
+      if (e.startsWith("a=ssrc:")) {
+        var eS = e.split(" ")[0]
+        var s = eS.split(":")[1]
+        if (dem == 0)
+          ssrcVoice = s
+        if (dem == 1) {
+          ssrcVideo = s
+          dem = 2;
+        }
+        if (dem == 2) {
+          if (s != ssrcVideo) {
+            ssrcPLI = s
+            dem = 3;
+          }
         }
       }
-    }
-    res = res + e + "\n";
-  });
+      res = res + e + "\n";
+    });
   console.log(ssrcVideo, ssrcVoice)
   if (ssrcVoice != "")
     res = res.replace(new RegExp(ssrcVoice, 'g'), (parseInt(userid) * 2).toString());
