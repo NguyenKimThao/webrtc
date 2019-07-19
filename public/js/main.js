@@ -21,7 +21,7 @@ var remoteStream = null;
 var isVideo = false;
 var isAudio = false;
 var payloadAudio = "111"
-var payloadVideo = "125"
+var payloadVideo = "97"
 var room = ""
 var stt = 1
 var isOwner = 0;
@@ -123,12 +123,6 @@ window.onbeforeunload = function () {
 function getConfigPeerConnection() {
 
   var username = "";
-  payloadVideo = isOwner ? "125" : "97"
-  payloadAudio = "111"
-  if ($("#typeAudio").val())
-    payloadAudio = $("#typeAudio").val()
-  if (isOwner && $("#typeVideo").val())
-    payloadVideo = $("#typeVideo").val()
   username = version + ":" + isOwner + ":"
   stt = stt + 1
 
@@ -142,6 +136,29 @@ function getConfigPeerConnection() {
   }
 
 
+  var pcConfig = {
+    'iceServers': [{
+      'urls': 'turn:' + server + ":" + port + '?transport=udp',
+      "username": username,
+      "credential": "123456"
+    }]
+  };
+  return pcConfig;
+}
+
+
+function getConfigPeerConnectionOld() {
+
+  var username = "";
+  username = version + ":" + isOwner + ":"
+  if (isOwner) {
+    room = userid
+    username = username + payloadVideo + ":" + payloadAudio + ":" + userid + ":" + session + ":" + room + ":" + stt
+  }
+  else {
+    room = session
+    username = username + payloadVideo + ":" + payloadAudio + ":" + session + ":" + userid + ":" + room + ":" + stt
+  }
   var pcConfig = {
     'iceServers': [{
       'urls': 'turn:' + server + ":" + port + '?transport=udp',
@@ -385,30 +402,6 @@ function setLocalAndAddCandidate(sessionDescription) {
         if (!e.startsWith("a=fmtp:" + payloadAudio) && !e.startsWith("a=fmtp:" + payloadVideo))
           return;
       }
-
-      // if (e.startsWith("a=rtpmap:96") || e.startsWith("a=rtcp-fb:96")
-      //   || e.startsWith("a=rtpmap:97") || e.startsWith("a=fmtp:97"))
-      //   return;
-      // if (e.startsWith("a=rtpmap:98") || e.startsWith("a=rtcp-fb:98") || e.startsWith("a=fmtp:98")
-      //   || e.startsWith("a=rtpmap:99") || e.startsWith("a=fmtp:99"))
-      //   return;
-      // if (e.startsWith("a=rtpmap:100") || e.startsWith("a=rtcp-fb:100") || e.startsWith("a=fmtp:100")
-      //   || e.startsWith("a=rtpmap:101") || e.startsWith("a=fmtp:101"))
-      //   return
-      // if (e.startsWith("a=rtpmap:102") || e.startsWith("a=rtcp-fb:102") || e.startsWith("a=fmtp:102")
-      //   || e.startsWith("a=rtpmap:123") || e.startsWith("a=fmtp:123"))
-      //   return
-      // // if (e.startsWith("a=rtpmap:125") || e.startsWith("a=rtcp-fb:125") || e.startsWith("a=fmtp:125")
-      // //     || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
-      // //     return
-      // if (e.startsWith("a=rtpmap:127") || e.startsWith("a=rtcp-fb:127") || e.startsWith("a=fmtp:127")
-      //   || e.startsWith("a=rtpmap:122") || e.startsWith("a=fmtp:122"))
-      //   return;
-      // if (e.startsWith("a=rtpmap:108") || e.startsWith("a=rtpmap:109") || e.startsWith("a=fmtp:109")
-      //   || e.startsWith("a=rtpmap:107") || e.startsWith("a=fmtp:107"))
-      //   return;
-      // if (e.startsWith("a=rtpmap:107") || e.startsWith("a=rtpmap:124") || e.startsWith("a=fmtp:107")
-      // ) return;
       if (e.indexOf("level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f") > 1) {
         var sl = e.split(" ")[0]
         payloadVideo = sl.split(":")[1]
@@ -458,6 +451,9 @@ function setLocalAndAddCandidate(sessionDescription) {
     res = res.replace(new RegExp(ssrcPLI, 'g'), "456");
   sessionDescription.sdp = res.substr(0, res.length - 1);
   console.log('Offer sending message', sessionDescription);
+
+  peerconnection.setConfiguration(getConfigPeerConnectionOld())
+
   peerconnection.setLocalDescription(sessionDescription);
   if (sessionDescription.type == "offer") {
     var message = getAnswer(constraints, oOffer, bundle)
