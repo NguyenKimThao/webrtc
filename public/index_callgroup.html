@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+
+		<title>Realtime communication with WebRTC</title>
+
+		<link rel="stylesheet" href="/css/main.css" />
+
+	</head>
+
+	<body>
+
+		<h1>Realtime communication with WebRTC</h1>
+		Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
+			<!-- <option value="222.255.216.226">ZRTP6(222.255.216.226)</option> -->
+			<option value="127.0.0.1">Local(127.0.0.1)</option>
+			<option value="10.42.0.81">ZRTP6(10.42.0.81)</option>
+		</select>
+		<br>
+		Server: <input type="text" id="server" value="" />
+		<br>
+		Port: <input type="text" id="port" value="" />
+		<br>
+		SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px;display: none;">
+			<option value="2">PC</option>
+		</select>
+		<button onclick="Reset()">Reset</button>
+		<!-- <button onclick="Restart()">Restart</button> -->
+		<br>
+		<!-- <br>
+		<button onclick="CallAudio()" id="callaudio">Call Audio</button>
+		<button onclick="CallVideo()" id="callvideo">Call Video</button>
+		<br> -->
+		<br>
+		<button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
+		<button onclick="JoinVideo()" id="joinvideo">Join Video</button>
+		<button onclick="JoinCall()" id="joincall">Join Call</button>
+		<br>
+		userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled /><br>
+		roommID: <input type="text" id="room" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
+		<div id="videos">
+			<video id="localVideo" autoplay muted playsinline></video>
+			<!-- <video id="remoteVideo" autoplay playsinline></video> -->
+		</div>
+		<!-- This file is automatically added/served when running "node index.js". -->
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="js/adapter-latest.js"></script>
+		<script src="js/jquery-3.4.0.min.js"></script>
+		<script src="js/main_callgroup.js"></script>
+
+	</body>
+
+</html>
