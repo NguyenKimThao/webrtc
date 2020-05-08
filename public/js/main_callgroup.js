@@ -98,12 +98,12 @@ function getConfigPeerConnection(peerId) {
 
   var pcConfig = {
     'iceServers': [
-    //   {
-    //   'urls': 'turn:' + server + ":" + port + '?transport=udp',
-    //   "username": username,
-    //   "credential": "123456"
-    // }
-  ]
+      //   {
+      //   'urls': 'turn:' + server + ":" + port + '?transport=udp',
+      //   "username": username,
+      //   "credential": "123456"
+      // }
+    ]
   };
   return pcConfig;
 }
@@ -118,10 +118,12 @@ function initCall() {
     server = $("#servercb").val()
     if (server == "127.0.0.1" || server == "10.199.213.101")
       port = "3010"
+    else if (server == "222.255.216.226")
+      port = "8110"
     else
       port = "8010"
   }
-  port = "3010"
+
   if (!userid || userid == "") {
     alert("Userid chÆ°a cÃ³, vui lÃ²ng reset láº¡i Ä‘á»ƒ láº¥y userid")
     return 0
@@ -192,7 +194,7 @@ function getPeerConnection(peerId) {
 }
 
 function getRTCIceCandidate() {
-  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag room" +room+ " network-id 1"
+  var candidateStr = "candidate:23643136 1 udp 41885439 " + server + " " + port + " typ relay raddr 127.0.0.1 rport 51025 generation 0 ufrag room" + room + " network-id 1"
   var candidate = new RTCIceCandidate({
     sdpMLineIndex: 0,
     candidate: candidateStr
@@ -239,7 +241,7 @@ function CreatePeerConnection(peerId) {
       console.log('Remote stream added by peerId:' + roomPeer.id);
       roomPeer.remoteStream = event.stream;
       $("#videos").append('<video id="remoteVideo' + roomPeer.id + '" autoplay playsinline></video>');
-      roomPeer.remoteVideo =  document.querySelector('#remoteVideo'+ roomPeer.id );
+      roomPeer.remoteVideo = document.querySelector('#remoteVideo' + roomPeer.id);
       roomPeer.remoteVideo.srcObject = roomPeer.remoteStream;
     };
     pc.onremovestream = function (event) {
@@ -333,7 +335,7 @@ function setLocalAndAddCandidate(peerId, sessionDescription) {
   sdpList.forEach(element => {
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
-      e = "a=ice-ufrag:"+userid+"_"+peerId;
+      e = "a=ice-ufrag:" + userid + "_" + peerId;
     // if(e.startsWith("a=fingerprint"))
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
@@ -408,7 +410,7 @@ function getOffer(type, peerId) {
       + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room"+room+"\n"
+      + "a=ice-ufrag:room" + room + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -427,7 +429,7 @@ function getOffer(type, peerId) {
       + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
       + "c=IN IP4 0.0.0.0\n"
       + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room"+room+"\n"
+      + "a=ice-ufrag:room" + room + "\n"
       + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
       + "a=ice-options:trickle\n"
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -468,7 +470,7 @@ function getOffer(type, peerId) {
         + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
         + "c=IN IP4 0.0.0.0\n"
         + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:room"+room+"\n"
+        + "a=ice-ufrag:room" + room + "\n"
         + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
         + "a=ice-options:trickle\n"
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
@@ -505,7 +507,7 @@ function getOffer(type, peerId) {
           + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
           + "c=IN IP4 0.0.0.0\n"
           + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:room"+room+"\n"
+          + "a=ice-ufrag:room" + room + "\n"
           + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
           + "a=ice-options:trickle\n"
           + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
