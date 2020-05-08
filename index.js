@@ -23,6 +23,7 @@ var fileServer = new (nodeStatic.Server)();
 var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
+appHttp.setTimeout(500000);
 
 app.use(
   bodyParser.urlencoded({
@@ -42,6 +43,7 @@ function getUid() {
 app.use("/genuid", function (rep, res) {
   res.json({ "err": 0, "data": { "id": getUid() } })
 })
+
 
 var io = socketIO.listen(appHttp);
 
@@ -170,6 +172,7 @@ app.use('/wait', function (req, res) {
   var room = getRoom(userPc[uid].room)
   if (!room[uid] | room[uid].pendding)
     return res.send('');
+  req.setTimeout(500000)
   room[uid].res = res;
   room[uid].pendding = true;
 });
@@ -187,7 +190,10 @@ app.post("/message", function (req, res) {
     res.send("");
   });
 })
-
+app.use('/clear', function (req, res) {
+  userPc = {};
+  roomPC = {};
+})
 
 app.use('/sign_out', function (req, res) {
   if (!req.query.peer_id)
