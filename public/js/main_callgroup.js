@@ -174,6 +174,23 @@ function gotStream(stream) {
   localVideo.srcObject = stream;
   socket.emit('join', { room: room, userid: userid });
 }
+
+function MuteAudio() {
+    console.log(localVideo.muted);
+    if (localVideo.muted)
+        localVideo.muted = false;
+    else
+        localVideo.muted = true;
+}
+
+function OnOffVideo() {
+    console.log(localVideo);
+    // if(localVideo.pause)
+    // localVideo.pause = false;
+    // else 
+    // localVideo.pause=true;
+}
+
 function getSession() {
   // $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
   //   var dataRes = JSON.parse(res)
@@ -221,6 +238,10 @@ function JoinCall() {
 // }
 
 function JoinMeeting(peerId) {
+    if (userid == peerId || roomManager[peerId] != null) {
+        console.log('da ton tai');
+        return false;
+    }
   var roomPeer = CreatePeerConnection(peerId);
   if (roomPeer == null)
     return false;
@@ -336,6 +357,8 @@ function setLocalAndAddCandidate(peerId, sessionDescription) {
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
       e = "a=ice-ufrag:" + userid + "_" + peerId;
+	if (e.startsWith("a=fmtp:97 level-asymmetr"))
+            e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     // if(e.startsWith("a=fingerprint"))
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
@@ -395,140 +418,149 @@ function handleCreateOfferError(event) {
 /////////////////////////////////////////////////////
 
 function getOffer(type, peerId) {
-  var sdp = ""
-  var sessionVideo = peerId
-  var sessionAudio = (parseInt(peerId) * 2).toString()
-  console.log(type)
-  if (!type || type.audio == true && type.video == true) {
+    var sdp = ""
+    var sessionVideo = peerId
+    var sessionAudio = (parseInt(peerId) * 2).toString()
+    console.log(type)
+    if (!type || type.audio && type.video) {
 
-    sdp = "v=0\n"
-      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-      + "s=-\n"
-      + "t=0 0\n"
-      + "a=group:BUNDLE audio video\n"
-      + "a=msid-semantic: WMS stream_id\n"
-      + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
-      + "c=IN IP4 0.0.0.0\n"
-      + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room" + room + "\n"
-      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-      + "a=ice-options:trickle\n"
-      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-      + "a=setup:actpass\n"
-      + "a=mid:audio\n"
-      + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
-      + "a=sendrecv\n"
-      + "a=rtcp-mux\n"
-      + "a=rtpmap:111 opus/48000/2\n"
-      + "a=rtcp-fb:111 transport-cc\n"
-      + "a=fmtp:111 minptime=10;useinbandfec=1\n"
-      + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
-      + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
-      + "a=ssrc:" + sessionAudio + " label:video_label\n"
-      + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
-      + "c=IN IP4 0.0.0.0\n"
-      + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room" + room + "\n"
-      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-      + "a=ice-options:trickle\n"
-      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-      + "a=setup:actpass\n"
-      + "a=mid:video\n"
-      + "a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid\n"
-      + "a=sendrecv\n"
-      + "a=rtcp-mux\n"
-      + "a=rtcp-rsize\n"
-      + "a=rtpmap:97 H264/90000\n"
-      + "a=rtcp-fb:97 goog-remb\n"
-      + "a=rtcp-fb:97 transport-cc\n"
-      + "a=rtcp-fb:97 ccm fir\n"
-      + "a=rtcp-fb:97 nack\n"
-      + "a=rtcp-fb:97 nack pli\n"
-      + "a=fmtp:97 level-asymmetry-allowed=0;packetization-mode=0;profile-level-id=42e01f\n"
-      // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
-      + "a=rtpmap:107 rtx/90000\n"
-      + "a=fmtp:107 apt=97\n"
-      + "a=ssrc-group:FID " + sessionVideo + " 123\n"
-      + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
-      + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
-      + "a=ssrc:" + sessionVideo + " label:video_label\n"
-      + "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + 123 + " msid:stream_id video_label\n"
-      + "a=ssrc:" + 123 + " mslabel:stream_id\n"
-      + "a=ssrc:" + 123 + " label:video_label\n"
-  }
-  else
+        sdp = "v=0\n" +
+            "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n" +
+            "s=-\n" +
+            "t=0 0\n" +
+            "a=group:BUNDLE audio video\n" +
+            "a=msid-semantic: WMS stream_id\n" +
+            "m=audio 9 UDP/TLS/RTP/SAVPF 111\n" +
+            "c=IN IP4 0.0.0.0\n" +
+            "a=rtcp:9 IN IP4 0.0.0.0\n" +
+            "a=ice-ufrag:room" + room + "\n" +
+            "a=ice-pwd:asd88fgpdd777uzjYhagZg\n" +
+            "a=ice-options:trickle\n" +
+            "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n" +
+            "a=setup:actpass\n" +
+            "a=mid:audio\n" +
+            "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n" +
+            "a=sendrecv\n" +
+            "a=rtcp-mux\n" +
+            "a=rtpmap:111 opus/48000/2\n" +
+            "a=rtcp-fb:111 transport-cc\n" +
+            "a=fmtp:111 minptime=10;useinbandfec=1\n" +
+            "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n" +
+            "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n" +
+            "a=ssrc:" + sessionAudio + " mslabel:stream_id\n" +
+            "a=ssrc:" + sessionAudio + " label:video_label\n" +
+            "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n" +
+            "c=IN IP4 0.0.0.0\n" +
+            "a=rtcp:9 IN IP4 0.0.0.0\n" +
+            "a=ice-ufrag:room" + room + "\n" +
+            "a=ice-pwd:asd88fgpdd777uzjYhagZg\n" +
+            "a=ice-options:trickle\n" +
+            "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n" +
+            "a=setup:actpass\n" +
+            "a=mid:video\n" +
+            // "a=extmap:15 urn:ietf:params:rtp-hdrext:sdes:mid\n" +
+            "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n" +
+            "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n" +
+            "a=sendrecv\n" +
+            "a=rtcp-mux\n" +
+            "a=rtcp-rsize\n" +
+            "a=rtpmap:97 H264/90000\n" +
+            "a=rtcp-fb:97 goog-remb\n" +
+            "a=rtcp-fb:97 transport-cc\n" +
+            "a=rtcp-fb:97 ccm fir\n" +
+            "a=rtcp-fb:97 nack\n" +
+            "a=rtcp-fb:97 nack pli\n" +
+            "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n" +
+            // "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n" +
+            "a=rtpmap:107 rtx/90000\n" +
+            "a=fmtp:107 apt=97\n" +
+            "a=ssrc-group:FID " + sessionVideo + " 123\n" +
+            "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n" +
+            "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n" +
+            "a=ssrc:" + sessionVideo + " mslabel:stream_id\n" +
+            "a=ssrc:" + sessionVideo + " label:video_label\n" +
+            "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n" +
+            "a=ssrc:" + 123 + " msid:stream_id video_label\n" +
+            "a=ssrc:" + 123 + " mslabel:stream_id\n" +
+            "a=ssrc:" + 123 + " label:video_label\n"
+    } else
     if (type.video)
-      sdp = "v=0\n"
-        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-        + "s=-\n"
-        + "t=0 0\n"
-        + "a=group:BUNDLE video\n"
-        + "a=msid-semantic: WMS stream_id\n"
-        + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
-        + "c=IN IP4 0.0.0.0\n"
-        + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:room" + room + "\n"
-        + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-        + "a=ice-options:trickle\n"
-        + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-        + "a=setup:actpass\n"
-        + "a=mid:video\n"
-        + "a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid\n"
-        + "a=sendrecv\n"
-        + "a=rtcp-mux\n"
-        + "a=rtcp-rsize\n"
-        + "a=rtpmap:97 H264/90000\n"
-        + "a=rtcp-fb:97 goog-remb\n"
-        + "a=rtcp-fb:97 transport-cc\n"
-        + "a=rtcp-fb:97 ccm fir\n"
-        + "a=rtcp-fb:97 nack\n"
-        + "a=rtcp-fb:97 nack pli\n"
-        + "a=fmtp:97 level-asymmetry-allowed=0;packetization-mode=0;profile-level-id=42e01f\n"
-        + "a=rtpmap:107 rtx/90000\n"
-        + "a=fmtp:107 apt=97\n"
-        // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
-        + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
-        + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
-        + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
-        + "a=ssrc:" + sessionVideo + " label:video_label\n"
+        sdp = "v=0\n" +
+        "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n" +
+        "s=-\n" +
+        "t=0 0\n" +
+        "a=group:BUNDLE video\n" +
+        "a=msid-semantic: WMS stream_id\n" +
+        "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n" +
+        "c=IN IP4 0.0.0.0\n" +
+        "a=rtcp:9 IN IP4 0.0.0.0\n" +
+        "a=ice-ufrag:room" + room + "\n" +
+        "a=ice-pwd:asd88fgpdd777uzjYhagZg\n" +
+        "a=ice-options:trickle\n" +
+        "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n" +
+        "a=setup:actpass\n" +
+        "a=mid:video\n" +
+        // "a=extmap:15 urn:ietf:params:rtp-hdrext:sdes:mid\n" +
+        "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n" +
+        "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n" +
+        "a=sendrecv\n" +
+        "a=rtcp-mux\n" +
+        "a=rtcp-rsize\n" +
+        "a=rtpmap:97 H264/90000\n" +
+        "a=rtcp-fb:97 goog-remb\n" +
+        "a=rtcp-fb:97 transport-cc\n" +
+        "a=rtcp-fb:97 ccm fir\n" +
+        "a=rtcp-fb:97 nack\n" +
+        "a=rtcp-fb:97 nack pli\n" +
+        "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n" +
+        // "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n" +
+        "a=rtpmap:107 rtx/90000\n" +
+        "a=fmtp:107 apt=97\n" +
+        "a=ssrc-group:FID " + sessionVideo + " 123\n" +
+        "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n" +
+        "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n" +
+        "a=ssrc:" + sessionVideo + " mslabel:stream_id\n" +
+        "a=ssrc:" + sessionVideo + " label:video_label\n" +
+        "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n" +
+        "a=ssrc:" + 123 + " msid:stream_id video_label\n" +
+        "a=ssrc:" + 123 + " mslabel:stream_id\n" +
+        "a=ssrc:" + 123 + " label:video_label\n"
     else
 
 
-      if (type.audio)
-        sdp = "v=0\n"
-          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-          + "s=-\n"
-          + "t=0 0\n"
-          + "a=group:BUNDLE audio\n"
-          + "a=msid-semantic: WMS stream_id\n"
-          + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
-          + "c=IN IP4 0.0.0.0\n"
-          + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:room" + room + "\n"
-          + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-          + "a=ice-options:trickle\n"
-          + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-          + "a=setup:actpass\n"
-          + "a=mid:audio\n"
-          + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
-          + "a=sendrecv\n"
-          + "a=rtcp-mux\n"
-          + "a=rtpmap:111 opus/48000/2\n"
-          + "a=rtcp-fb:111 transport-cc\n"
-          + "a=fmtp:111 minptime=10;useinbandfec=1\n"
-          // + "a=rtcp-fb:111 ccm fir\n"
-          // + "a=rtcp-fb:111 nack\n"
-          // + "a=rtcp-fb:111 nack pli\n"
+    if (type.audio)
+        sdp = "v=0\n" +
+        "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n" +
+        "s=-\n" +
+        "t=0 0\n" +
+        "a=group:BUNDLE audio\n" +
+        "a=msid-semantic: WMS stream_id\n" +
+        "m=audio 9 UDP/TLS/RTP/SAVPF 111\n" +
+        "c=IN IP4 0.0.0.0\n" +
+        "a=rtcp:9 IN IP4 0.0.0.0\n" +
+        "a=ice-ufrag:room" + room + "\n" +
+        "a=ice-pwd:asd88fgpdd777uzjYhagZg\n" +
+        "a=ice-options:trickle\n" +
+        "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n" +
+        "a=setup:actpass\n" +
+        "a=mid:audio\n" +
+        "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n" +
+        "a=sendrecv\n" +
+        "a=rtcp-mux\n" +
+        "a=rtpmap:111 opus/48000/2\n" +
+        "a=rtcp-fb:111 transport-cc\n" +
+        "a=fmtp:111 minptime=10;useinbandfec=1\n"
+        // + "a=rtcp-fb:111 ccm fir\n"
+        // + "a=rtcp-fb:111 nack\n"
+        // + "a=rtcp-fb:111 nack pli\n"
 
-          + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
-          + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
-          + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
-          + "a=ssrc:" + sessionAudio + " label:video_label\n"
-  var message = { sdp: sdp, type: "offer" };
-  return message
+    +
+    "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n" +
+        "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n" +
+        "a=ssrc:" + sessionAudio + " mslabel:stream_id\n" +
+        "a=ssrc:" + sessionAudio + " label:video_label\n"
+    var message = { sdp: sdp, type: "offer" };
+    return message
 }
 
 
