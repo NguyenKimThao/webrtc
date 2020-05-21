@@ -21,7 +21,7 @@ var fileServer = new(nodeStatic.Server)();
 var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
-var appHttps = https.createServer(options, app).listen(443);
+// var appHttps = https.createServer(options, app).listen(443);
 
 function getUid() {
     id = id + 1
@@ -39,10 +39,10 @@ app.use("/manager", function(rep, res) {
 })
 
 
-// var io = socketIO.listen(appHttp);
-var io = new socketIO();
-io.attach(appHttp);
-io.attach(appHttps);
+var io = socketIO.listen(appHttp);
+// var io = new socketIO();
+// io.attach(appHttp);
+// io.attach(appHttps);
 
 var roomManager = {};
 var socketMenager = {};
