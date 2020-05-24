@@ -221,6 +221,10 @@ function JoinCall() {
 // }
 
 function JoinMeeting(peerId) {
+  if (userid == peerId || roomManager[peerId] != null) {
+    console.log('da ton tai');
+    return false;
+  }
   var roomPeer = CreatePeerConnection(peerId);
   if (roomPeer == null)
     return false;
@@ -336,6 +340,8 @@ function setLocalAndAddCandidate(peerId, sessionDescription) {
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
       e = "a=ice-ufrag:" + userid + "_" + peerId;
+    if (e.startsWith("a=fmtp:97 level-asymmetr"))
+      e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     // if(e.startsWith("a=fingerprint"))
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
@@ -399,7 +405,7 @@ function getOffer(type, peerId) {
   var sessionVideo = peerId
   var sessionAudio = (parseInt(peerId) * 2).toString()
   console.log(type)
-  if (!type || type.audio == true && type.video == true) {
+  if (!type || type.audio && type.video) {
 
     sdp = "v=0\n"
       + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
@@ -435,7 +441,8 @@ function getOffer(type, peerId) {
       + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
       + "a=setup:actpass\n"
       + "a=mid:video\n"
-      + "a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid\n"
+      + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+      + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
       + "a=sendrecv\n"
       + "a=rtcp-mux\n"
       + "a=rtcp-rsize\n"
@@ -445,21 +452,14 @@ function getOffer(type, peerId) {
       + "a=rtcp-fb:97 ccm fir\n"
       + "a=rtcp-fb:97 nack\n"
       + "a=rtcp-fb:97 nack pli\n"
-      + "a=fmtp:97 level-asymmetry-allowed=0;packetization-mode=0;profile-level-id=42e01f\n"
-      // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
+      + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
       + "a=rtpmap:107 rtx/90000\n"
       + "a=fmtp:107 apt=97\n"
-      + "a=ssrc-group:FID " + sessionVideo + " 123\n"
       + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
       + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
       + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
       + "a=ssrc:" + sessionVideo + " label:video_label\n"
-      + "a=ssrc:" + 123 + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + 123 + " msid:stream_id video_label\n"
-      + "a=ssrc:" + 123 + " mslabel:stream_id\n"
-      + "a=ssrc:" + 123 + " label:video_label\n"
-  }
-  else
+  } else
     if (type.video)
       sdp = "v=0\n"
         + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
@@ -476,7 +476,8 @@ function getOffer(type, peerId) {
         + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
         + "a=setup:actpass\n"
         + "a=mid:video\n"
-        + "a=extmap:3 urn:ietf:params:rtp-hdrext:sdes:mid\n"
+        + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+        + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
         + "a=sendrecv\n"
         + "a=rtcp-mux\n"
         + "a=rtcp-rsize\n"
@@ -486,10 +487,9 @@ function getOffer(type, peerId) {
         + "a=rtcp-fb:97 ccm fir\n"
         + "a=rtcp-fb:97 nack\n"
         + "a=rtcp-fb:97 nack pli\n"
-        + "a=fmtp:97 level-asymmetry-allowed=0;packetization-mode=0;profile-level-id=42e01f\n"
+        + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
         + "a=rtpmap:107 rtx/90000\n"
         + "a=fmtp:107 apt=97\n"
-        // + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA==\n"
         + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
         + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
         + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
@@ -519,10 +519,9 @@ function getOffer(type, peerId) {
           + "a=rtpmap:111 opus/48000/2\n"
           + "a=rtcp-fb:111 transport-cc\n"
           + "a=fmtp:111 minptime=10;useinbandfec=1\n"
-          // + "a=rtcp-fb:111 ccm fir\n"
-          // + "a=rtcp-fb:111 nack\n"
-          // + "a=rtcp-fb:111 nack pli\n"
-
+          + "a=rtcp-fb:111 ccm fir\n"
+          + "a=rtcp-fb:111 nack\n"
+          + "a=rtcp-fb:111 nack pli\n"
           + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
           + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
           + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"

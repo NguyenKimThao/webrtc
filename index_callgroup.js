@@ -72,8 +72,7 @@ io.sockets.on('connection', function (socket) {
     if (!roomManager[data.room]) {
       roomManager[data.room] = {};
     }
-    // roomManager[data.room] = {};
-    // roomManager[data.room][data.room]={userid:data.room};
+    roomManager[data.room][data.room]={userid:data.room};
 
     var room = roomManager[data.room];
     console.log("co user tham gia phong:", data.room, " slht:", room, " userid:", data.userid)
