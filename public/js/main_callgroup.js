@@ -22,6 +22,8 @@ var server = ""
 var port = 0
 var version = "0.0.0"
 var roomManager = {};
+var mDataRoom = {};
+var mPeerConnection = null;
 
 function stop() {
   $("#joinaudio").prop('disabled', false);
@@ -59,43 +61,32 @@ socket.on('bye', function (message) {
 });
 
 socket.on('listuid', function (data) {
-  var keys = data.keys;
-  for (var i in data) {
-    var peerId = data[i].userid;
-    JoinMeeting(peerId);
-  }
+  mDataRoom = data;
+  var roomName = room;
+  console.log(mDataRoom);
+  CreateMeeting(roomName, mDataRoom);
+  // for (var i in data) {
+  //   var peerId = data[i].userid;
+  //   JoinMeeting(peerId);
+  // }
 });
 
 
-socket.on('user_join', function (peerId) {
-  console.log('user_join:', peerId);
-  JoinMeeting(peerId);
+socket.on('user_join', function (data) {
+  mDataRoom = data;
+  var roomName = room;
+  console.log(mDataRoom);
+  CreateMeeting(roomName, mDataRoom);
+  // console.log('user_join:', peerId);
+  // JoinMeeting(peerId);
 });
-socket.on('candidate', function (data) {
-  if (data.peerId != userid)
-    return;
-  console.log('candidate:', data);
-  var candidate = new RTCIceCandidate({
-    sdpMLineIndex: 0,
-    candidate: data.candidate
-  });
-  var pc = getPeerConnection(data.userId);
-  if (pc == null)
-    return;
-  pc.addIceCandidate(candidate)
-});
-
-
 
 window.onbeforeunload = function () {
   socket.emit("bye", { room: room, userid: userid });
 };
-/////////////////////////////////////////
 
-function getConfigPeerConnection(peerId) {
-
-  var username = room + ":" + userid + ":" + peerId + ":" + session;
-
+function getConfigRTCPeerConnection(userid, room, session) {
+  var username = room + ":" + userid + ":" + session;
   var pcConfig = {
     'iceServers': [
       //   {
@@ -103,10 +94,12 @@ function getConfigPeerConnection(peerId) {
       //   "username": username,
       //   "credential": "123456"
       // }
-    ]
+    ],
+    sdpSemantics:'unified-plan'
   };
   return pcConfig;
 }
+
 
 function initCall() {
   room = $("#room").val();
@@ -119,7 +112,7 @@ function initCall() {
     if (server == "127.0.0.1" || server == "10.199.213.101")
       port = "3010"
     else if (server == "222.255.216.226")
-      port = "8110"
+      port = "8210"
     else
       port = "8010"
   }
@@ -172,7 +165,7 @@ function gotStream(stream) {
   console.log('Adding local stream.');
   localStream = stream;
   localVideo.srcObject = stream;
-  socket.emit('join', { room: room, userid: userid });
+  socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio });
 }
 function getSession() {
   // $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
@@ -187,10 +180,6 @@ function getSession() {
     $("#room").val(1);
     $("#userid").val(userid)
   });
-}
-
-function getPeerConnection(peerId) {
-  return roomManager[peerId] ? roomManager[peerId].pc : null;
 }
 
 function getRTCIceCandidate() {
@@ -220,56 +209,54 @@ function JoinCall() {
 //   Restart();
 // }
 
-function JoinMeeting(peerId) {
-  if (userid == peerId || roomManager[peerId] != null) {
-    console.log('da ton tai');
-    return false;
+function CreateMeeting(roomName, dataRoom) {
+  if (mPeerConnection == null) {
+    var pc = CreateRTCPeerConnection();
+    if (pc == null)
+      return false;
+    mPeerConnection = pc;
+  } else {
+    configOffer.iceRestart = true;
   }
-  var roomPeer = CreatePeerConnection(peerId);
-  if (roomPeer == null)
-    return false;
-  roomManager[peerId] = roomPeer;
-  maybeStart(peerId);
+  maybeStart(mPeerConnection, roomName, dataRoom);
 }
 
-function CreatePeerConnection(peerId) {
+
+function maybeStart(peerconnection, roomName, dataRoom) {
+  var offer = getOffer(roomName, dataRoom)
+  console.log(offer);
+  peerconnection.setRemoteDescription(offer)
+  peerconnection.createAnswer().then(function (sessionDescription) {
+    setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDescription);
+  });
+}
+
+function CreateRTCPeerConnection() {
+
   console.log('>>>>>> creating peer connection');
 
   try {
-    var roomPeer = { id: peerId };
-    var pcConfig = getConfigPeerConnection(roomPeer.id)
+    var pcConfig = getConfigRTCPeerConnection(userid, room, session)
     if (!pcConfig)
       return null;
-    var pc = new RTCPeerConnection(pcConfig);
+    var pc = new RTCPeerConnection({sdpSemantics:'plan-b'});
     pc.onaddstream = function (event) {
-      console.log('Remote stream added by peerId:' + roomPeer.id);
-      roomPeer.remoteStream = event.stream;
-      $("#videos").append('<video id="remoteVideo' + roomPeer.id + '" autoplay playsinline></video>');
-      roomPeer.remoteVideo = document.querySelector('#remoteVideo' + roomPeer.id);
-      roomPeer.remoteVideo.srcObject = roomPeer.remoteStream;
+      var id = event.stream.id;
+      console.log('Remote stream added by peerId:', id, event);
+      var remoteStream = event.stream;
+      $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
+      var remoteVideo = document.querySelector('#remoteVideo' + id);
+      remoteVideo.srcObject = remoteStream;
     };
     pc.onremovestream = function (event) {
-      console.log('Remote stream remove by peerId:' + roomPeer.id);
+      console.log('Remote stream remove by peerId:' + event,event.stream);
     };
     pc.onicecandidate = function (e) {
-      // console.log("handleIceCandidate:", e);
-      // if (e.candidate /*&& e.candidate.type == "relay"*/) {
-      //   socket.emit('candidate', {
-      //     type: 'candidate',
-      //     label: event.candidate.sdpMLineIndex,
-      //     id: event.candidate.sdpMid,
-      //     candidate: event.candidate.candidate,
-      //     peerId: roomPeer.id,
-      //     userId: userid,
-      //     room: room
-      //   })
-      // }
     };
     pc.addStream(localStream);
-    roomPeer.pc = pc;
     // pc.oniceconnectionstatechange = handleIceConnectionStateChange;
     console.log('Created RTCPeerConnnection sessecion');
-    return roomPeer;
+    return pc;
   } catch (e) {
     console.log('Failed to create PeerConnection, exception: ' + e.message);
     alert('Cannot create RTCPeerConnection object.');
@@ -278,53 +265,10 @@ function CreatePeerConnection(peerId) {
 
 }
 
-// var myVar = null;
-// function handleIceCandidate(e) {
-//   if (e.candidate && e.candidate.type == "relay") {
-//     console.log("handleIceCandidate:", e);
-//     if (version == "0")
-//       sendMessage({
-//         type: 'candidate',
-//         label: event.candidate.sdpMLineIndex,
-//         id: event.candidate.sdpMid,
-//         candidate: event.candidate.candidate
-//       });
-//   }
-// }
-// function handleIceConnectionStateChange(e) {
-//   console.log("change:", e);
-
-//   if (e.currentTarget.iceConnectionState == "disconnected") {
-//     if (myVar == null) {
-//       Restart()
-//       myVar = setInterval(function () {
-//         Restart()
-//       }, 5000);
-//     }
-
-//   }
-//   if (e.currentTarget.iceConnectionState == "complete" || e.currentTarget.iceConnectionState == "connected") {
-//     if (myVar)
-//       clearInterval(myVar);
-//   }
-
-// }
-
-function maybeStart(peerId) {
-  var offer = getOffer(constraints, peerId)
-  console.log(offer);
-  var peerconnection = getPeerConnection(peerId);
-  peerconnection.setRemoteDescription(offer)
-  peerconnection.createAnswer().then(function (sessionDescription) {
-    setLocalAndAddCandidate(peerId, sessionDescription);
-  });
-}
-
 /////////////////////////////////////////
 
 
-function setLocalAndAddCandidate(peerId, sessionDescription) {
-  var peerconnection = getPeerConnection(peerId);
+function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDescription) {
   var sdp = sessionDescription.sdp;
   var sdpList = sdp.split('\n');
   var res = "";
@@ -332,14 +276,11 @@ function setLocalAndAddCandidate(peerId, sessionDescription) {
   var ssrcVoice = ""
   var ssrcPLI = ""
   var dem = 0
-  var oOffer = ""
-  var bundle = []
-
 
   sdpList.forEach(element => {
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
-      e = "a=ice-ufrag:" + userid + "_" + peerId;
+      e = "a=ice-ufrag:" + userid + "_" + roomName;
     if (e.startsWith("a=fmtp:97 level-asymmetr"))
       e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
     // if(e.startsWith("a=fingerprint"))
@@ -384,150 +325,105 @@ function setLocalAndAddCandidate(peerId, sessionDescription) {
 }
 
 
-//////////////////////////////////////////
-
-function handleRemoteStreamAdded(event) {
-  console.log('Remote stream added.');
-  remoteStream = event.stream;
-  remoteVideo.srcObject = remoteStream;
-}
-function handleRemoteStreamRemoved(event) {
-  console.log('Remote stream removed. Event: ', event);
-}
-function handleCreateOfferError(event) {
-  console.log('createOffer() error: ', event);
-}
-
 /////////////////////////////////////////////////////
-
-function getOffer(type, peerId) {
-  var sdp = ""
-  var sessionVideo = peerId
-  var sessionAudio = (parseInt(peerId) * 2).toString()
-  console.log(type)
-  if (!type || type.audio && type.video) {
-
-    sdp = "v=0\n"
-      + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-      + "s=-\n"
-      + "t=0 0\n"
-      + "a=group:BUNDLE audio video\n"
-      + "a=msid-semantic: WMS stream_id\n"
-      + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
-      + "c=IN IP4 0.0.0.0\n"
-      + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room" + room + "\n"
-      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-      + "a=ice-options:trickle\n"
-      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-      + "a=setup:actpass\n"
-      + "a=mid:audio\n"
-      + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
-      + "a=sendrecv\n"
-      + "a=rtcp-mux\n"
-      + "a=rtpmap:111 opus/48000/2\n"
-      + "a=rtcp-fb:111 transport-cc\n"
-      + "a=fmtp:111 minptime=10;useinbandfec=1\n"
-      + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
-      + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
-      + "a=ssrc:" + sessionAudio + " label:video_label\n"
-      + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
-      + "c=IN IP4 0.0.0.0\n"
-      + "a=rtcp:9 IN IP4 0.0.0.0\n"
-      + "a=ice-ufrag:room" + room + "\n"
-      + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-      + "a=ice-options:trickle\n"
-      + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-      + "a=setup:actpass\n"
-      + "a=mid:video\n"
-      + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
-      + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
-      + "a=sendrecv\n"
-      + "a=rtcp-mux\n"
-      + "a=rtcp-rsize\n"
-      + "a=rtpmap:97 H264/90000\n"
-      + "a=rtcp-fb:97 goog-remb\n"
-      + "a=rtcp-fb:97 transport-cc\n"
-      + "a=rtcp-fb:97 ccm fir\n"
-      + "a=rtcp-fb:97 nack\n"
-      + "a=rtcp-fb:97 nack pli\n"
-      + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
-      + "a=rtpmap:107 rtx/90000\n"
-      + "a=fmtp:107 apt=97\n"
-      + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
-      + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
-      + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
-      + "a=ssrc:" + sessionVideo + " label:video_label\n"
-  } else
-    if (type.video)
-      sdp = "v=0\n"
-        + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-        + "s=-\n"
-        + "t=0 0\n"
-        + "a=group:BUNDLE video\n"
-        + "a=msid-semantic: WMS stream_id\n"
-        + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
-        + "c=IN IP4 0.0.0.0\n"
-        + "a=rtcp:9 IN IP4 0.0.0.0\n"
-        + "a=ice-ufrag:room" + room + "\n"
-        + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-        + "a=ice-options:trickle\n"
-        + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-        + "a=setup:actpass\n"
-        + "a=mid:video\n"
-        + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
-        + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
-        + "a=sendrecv\n"
-        + "a=rtcp-mux\n"
-        + "a=rtcp-rsize\n"
-        + "a=rtpmap:97 H264/90000\n"
-        + "a=rtcp-fb:97 goog-remb\n"
-        + "a=rtcp-fb:97 transport-cc\n"
-        + "a=rtcp-fb:97 ccm fir\n"
-        + "a=rtcp-fb:97 nack\n"
-        + "a=rtcp-fb:97 nack pli\n"
-        + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
-        + "a=rtpmap:107 rtx/90000\n"
-        + "a=fmtp:107 apt=97\n"
-        + "a=ssrc:" + sessionVideo + " cname:f5FD5M4nwcZqWTiQ\n"
-        + "a=ssrc:" + sessionVideo + " msid:stream_id video_label\n"
-        + "a=ssrc:" + sessionVideo + " mslabel:stream_id\n"
-        + "a=ssrc:" + sessionVideo + " label:video_label\n"
-    else
-
-
-      if (type.audio)
-        sdp = "v=0\n"
-          + "o=- 1443513048222864666 2 IN IP4 127.0.0.1\n"
-          + "s=-\n"
-          + "t=0 0\n"
-          + "a=group:BUNDLE audio\n"
-          + "a=msid-semantic: WMS stream_id\n"
-          + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
-          + "c=IN IP4 0.0.0.0\n"
-          + "a=rtcp:9 IN IP4 0.0.0.0\n"
-          + "a=ice-ufrag:room" + room + "\n"
-          + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
-          + "a=ice-options:trickle\n"
-          + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
-          + "a=setup:actpass\n"
-          + "a=mid:audio\n"
-          + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
-          + "a=sendrecv\n"
-          + "a=rtcp-mux\n"
-          + "a=rtpmap:111 opus/48000/2\n"
-          + "a=rtcp-fb:111 transport-cc\n"
-          + "a=fmtp:111 minptime=10;useinbandfec=1\n"
-          + "a=rtcp-fb:111 ccm fir\n"
-          + "a=rtcp-fb:111 nack\n"
-          + "a=rtcp-fb:111 nack pli\n"
-          + "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n"
-          + "a=ssrc:" + sessionAudio + " msid:stream_id video_label\n"
-          + "a=ssrc:" + sessionAudio + " mslabel:stream_id\n"
-          + "a=ssrc:" + sessionAudio + " label:video_label\n"
+function getOffer(roomName, dataRoom) {
+  var sdp = buildOffer(roomName, dataRoom);
   var message = { sdp: sdp, type: "offer" };
   return message
+}
+var sttRestart = 0;
+
+function buildOffer(roomName, dataRoom) {
+  // sttRestart++;
+  var sdp = ""
+    + "v=0\n"
+    + "o=- 1443513048222864666 " + sttRestart + " IN IP4 127.0.0.1\n"
+    + "s=-\n"
+    + "t=0 0\n"
+    + "a=group:BUNDLE audio video\n"
+    + "a=msid-semantic: WMS *\n"
+  var sdpAudio = ""
+    + "m=audio 9 UDP/TLS/RTP/SAVPF 111\n"
+    + "c=IN IP4 0.0.0.0\n"
+    + "a=rtcp:9 IN IP4 0.0.0.0\n"
+    + "a=ice-ufrag:room" + roomName + "\n"
+    + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+    + "a=ice-options:trickle\n"
+    + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+    + "a=setup:actpass\n"
+    + "a=mid:audio\n"
+    + "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n"
+    + "a=sendrecv\n"
+    + "a=rtcp-mux\n"
+    + "a=rtcp-rsize\n"
+    + "a=rtpmap:111 opus/48000/2\n"
+    + "a=rtcp-fb:111 transport-cc\n"
+    + "a=fmtp:111 minptime=10;useinbandfec=1\n";
+  var sdpVideo = ""
+    + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
+    + "c=IN IP4 0.0.0.0\n"
+    + "a=rtcp:9 IN IP4 0.0.0.0\n"
+    + "a=ice-ufrag:room" + roomName + "\n"
+    + "a=ice-pwd:asd88fgpdd777uzjYhagZg\n"
+    + "a=ice-options:trickle\n"
+    + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
+    + "a=setup:actpass\n"
+    + "a=mid:video\n"
+    + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+    + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
+    + "a=sendrecv\n"
+    + "a=rtcp-mux\n"
+    + "a=rtcp-rsize\n"
+    + "a=rtpmap:97 H264/90000\n"
+    + "a=rtcp-fb:97 goog-remb\n"
+    + "a=rtcp-fb:97 transport-cc\n"
+    + "a=rtcp-fb:97 ccm fir\n"
+    + "a=rtcp-fb:97 nack\n"
+    + "a=rtcp-fb:97 nack pli\n"
+    + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+    + "a=rtpmap:107 rtx/90000\n"
+    + "a=fmtp:107 apt=97\n"
+  
+  var keys = dataRoom.keys;
+  var demSTT=0;
+  Object.keys(dataRoom).forEach(i => {
+    var peerUser = dataRoom[i]; 
+    var peerId = peerUser.userid;
+    if (peerId == userid)
+      return;
+      demSTT++;
+    // groupBundle = groupBundle + " audio" + peerId + " video" + peerId;
+    // semantic = semantic + " stream" + peerId
+    // if(demSTT<2)
+    sdpAudio += getAudio(peerId, roomName);
+    sdpVideo += getVideo(peerId, roomName);
+  })
+
+  sdp = sdp  + sdpAudio + sdpVideo;
+  return sdp;
+}
+
+function getAudio(peerId, roomName) {
+
+  var sessionVideo = peerId
+  var sessionAudio = (parseInt(peerId) * 2).toString()
+  var sdpAudio = ""
+    + "a=ssrc:" + sessionAudio + " cname:"+sessionVideo+"\n"
+    + "a=ssrc:" + sessionAudio + " msid:" + sessionVideo + " "+sessionVideo+"\n"
+  return sdpAudio
+}
+
+function getVideo(peerId, roomName) {
+  var sessionVideo = peerId
+  var ssrcTamp=(parseInt(peerId) * 3).toString()
+  var sdpVideo = ""
+  + "a=ssrc-group:FID " + sessionVideo + " "+ssrcTamp+"\n"
+  + "a=ssrc:" + sessionVideo + " cname:"+sessionVideo+"\n"
+  + "a=ssrc:" + sessionVideo + " msid:" + sessionVideo + " "+sessionVideo+"\n"
+  + "a=ssrc:" + ssrcTamp + " cname:"+sessionVideo+"\n"
+  + "a=ssrc:" + ssrcTamp + " msid:" + sessionVideo + " "+sessionVideo+"\n"
+ 
+  return sdpVideo;
 }
 
 
