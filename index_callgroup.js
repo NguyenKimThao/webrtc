@@ -38,7 +38,7 @@ app.use("/", function (rep, res) {
 // var io = socketIO.listen(appHttp);
 var io = new socketIO();
 io.attach(appHttp);
-io.attach(appHttps);
+// io.attach(appHttps);
 
 var roomManager = {};
 var socketMenager = {};
