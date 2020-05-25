@@ -95,7 +95,7 @@ function getConfigRTCPeerConnection(userid, room, session) {
       //   "credential": "123456"
       // }
     ],
-    sdpSemantics:'unified-plan'
+    sdpSemantics: 'unified-plan'
   };
   return pcConfig;
 }
@@ -239,7 +239,7 @@ function CreateRTCPeerConnection() {
     var pcConfig = getConfigRTCPeerConnection(userid, room, session)
     if (!pcConfig)
       return null;
-    var pc = new RTCPeerConnection({sdpSemantics:'plan-b'});
+    var pc = new RTCPeerConnection({ sdpSemantics: 'plan-b' });
     pc.onaddstream = function (event) {
       var id = event.stream.id;
       console.log('Remote stream added by peerId:', id, event);
@@ -249,7 +249,7 @@ function CreateRTCPeerConnection() {
       remoteVideo.srcObject = remoteStream;
     };
     pc.onremovestream = function (event) {
-      console.log('Remote stream remove by peerId:' + event,event.stream);
+      console.log('Remote stream remove by peerId:' + event, event.stream);
     };
     pc.onicecandidate = function (e) {
     };
@@ -287,6 +287,11 @@ function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDesc
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
       e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
+    if (e.startsWith("a=mid:video")) {
+      e = e + "\n"
+        + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+        + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+    }
     if (e.startsWith("m=audio"))
       dem = 0
     if (e.startsWith("m=video"))
@@ -369,8 +374,8 @@ function buildOffer(roomName, dataRoom) {
     + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
     + "a=setup:actpass\n"
     + "a=mid:video\n"
-    + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
-    + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
+    // + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+    // + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
     + "a=sendrecv\n"
     + "a=rtcp-mux\n"
     + "a=rtcp-rsize\n"
@@ -383,15 +388,15 @@ function buildOffer(roomName, dataRoom) {
     + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
     + "a=rtpmap:107 rtx/90000\n"
     + "a=fmtp:107 apt=97\n"
-  
+
   var keys = dataRoom.keys;
-  var demSTT=0;
+  var demSTT = 0;
   Object.keys(dataRoom).forEach(i => {
-    var peerUser = dataRoom[i]; 
+    var peerUser = dataRoom[i];
     var peerId = peerUser.userid;
     if (peerId == userid)
       return;
-      demSTT++;
+    demSTT++;
     // groupBundle = groupBundle + " audio" + peerId + " video" + peerId;
     // semantic = semantic + " stream" + peerId
     // if(demSTT<2)
@@ -399,7 +404,7 @@ function buildOffer(roomName, dataRoom) {
     sdpVideo += getVideo(peerId, roomName);
   })
 
-  sdp = sdp  + sdpAudio + sdpVideo;
+  sdp = sdp + sdpAudio + sdpVideo;
   return sdp;
 }
 
@@ -408,21 +413,17 @@ function getAudio(peerId, roomName) {
   var sessionVideo = peerId
   var sessionAudio = (parseInt(peerId) * 2).toString()
   var sdpAudio = ""
-    + "a=ssrc:" + sessionAudio + " cname:"+sessionVideo+"\n"
-    + "a=ssrc:" + sessionAudio + " msid:" + sessionVideo + " "+sessionVideo+"\n"
+    + "a=ssrc:" + sessionAudio + " cname:" + sessionVideo + "\n"
+    + "a=ssrc:" + sessionAudio + " msid:" + sessionVideo + " " + sessionVideo + "\n"
   return sdpAudio
 }
 
 function getVideo(peerId, roomName) {
   var sessionVideo = peerId
-  var ssrcTamp=(parseInt(peerId) * 3).toString()
   var sdpVideo = ""
-  + "a=ssrc-group:FID " + sessionVideo + " "+ssrcTamp+"\n"
-  + "a=ssrc:" + sessionVideo + " cname:"+sessionVideo+"\n"
-  + "a=ssrc:" + sessionVideo + " msid:" + sessionVideo + " "+sessionVideo+"\n"
-  + "a=ssrc:" + ssrcTamp + " cname:"+sessionVideo+"\n"
-  + "a=ssrc:" + ssrcTamp + " msid:" + sessionVideo + " "+sessionVideo+"\n"
- 
+    + "a=ssrc:" + sessionVideo + " cname:" + sessionVideo + "\n"
+    + "a=ssrc:" + sessionVideo + " msid:" + sessionVideo + " " + sessionVideo + "\n"
+
   return sdpVideo;
 }
 
