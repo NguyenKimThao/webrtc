@@ -21,7 +21,7 @@ var fileServer = new (nodeStatic.Server)();
 var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
-var appHttps = https.createServer(options, app).listen(443);
+// var appHttps = https.createServer(options, app).listen(443);
 
 app.use("/genuid", function (rep, res) {
   id = id + 1
