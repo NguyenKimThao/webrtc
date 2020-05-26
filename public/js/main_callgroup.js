@@ -388,18 +388,15 @@ function buildOffer(roomName, dataRoom) {
     + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
     + "a=rtpmap:107 rtx/90000\n"
     + "a=fmtp:107 apt=97\n"
-
+  
   var keys = dataRoom.keys;
-  var demSTT = 0;
   Object.keys(dataRoom).forEach(i => {
     var peerUser = dataRoom[i];
     var peerId = peerUser.userid;
     if (peerId == userid)
       return;
-    demSTT++;
     // groupBundle = groupBundle + " audio" + peerId + " video" + peerId;
     // semantic = semantic + " stream" + peerId
-    // if(demSTT<2)
     sdpAudio += getAudio(peerId, roomName);
     sdpVideo += getVideo(peerId, roomName);
   })
