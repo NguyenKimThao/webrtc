@@ -150,6 +150,15 @@ function call(video, audio) {
     video: video,
     audio: audio
   };
+  if(video){
+    constraints = {
+      video: {
+        width:320,
+        height:180,
+      },
+      audio: audio
+    };
+  }
   configOffer = {
     offerToReceiveVideo: video,
     offerToReceiveAudio: audio,
@@ -244,6 +253,10 @@ function CreateRTCPeerConnection() {
       var id = event.stream.id;
       console.log('Remote stream added by peerId:', id, event);
       var remoteStream = event.stream;
+      // var videoRemove=$('<div stype="display: inline-block;"></div>');
+      // videoRemove.append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
+      // videoRemove.append('<div>' + id + '</div>');
+      // $("#videos").append(videoRemove);
       $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var remoteVideo = document.querySelector('#remoteVideo' + id);
       remoteVideo.srcObject = remoteStream;
@@ -374,8 +387,8 @@ function buildOffer(roomName, dataRoom) {
     + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
     + "a=setup:actpass\n"
     + "a=mid:video\n"
-    // + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
-    // + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
+    + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+    + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
     + "a=sendrecv\n"
     + "a=rtcp-mux\n"
     + "a=rtcp-rsize\n"
