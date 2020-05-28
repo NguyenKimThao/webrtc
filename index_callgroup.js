@@ -55,9 +55,9 @@ io.sockets.on('connection', function (socket) {
     var peer=parseInt(data.userid);
 
     roomManager[data.room][data.room] = { userid: data.room, video:true, audio:true };
-    for(var i=peer-2 ; i<=peer+2;i++){
-        roomManager[data.room][i] = { userid: i, video:true, audio:true };
-    }
+    // for(var i=peer-2 ; i<=peer+2;i++){
+    //     roomManager[data.room][i] = { userid: i, video:true, audio:true };
+    // }
     var room = roomManager[data.room];
     console.log("co user tham gia phong:", data.room, " slht:", room, " userid:", data.userid)
     console.log(room);
