@@ -151,10 +151,12 @@ function call(video, audio) {
     audio: audio
   };
   if(video){
+    var width=parseInt($("#width").val()) | 640;
+    var height=parseInt($("#height").val()) | 480;
     constraints = {
       video: {
-        width:1280,
-        height:720,
+        width:width,
+        height:height,
       },
       audio: audio
     };
