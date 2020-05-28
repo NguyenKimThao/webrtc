@@ -153,8 +153,8 @@ function call(video, audio) {
   if(video){
     constraints = {
       video: {
-        width:320,
-        height:180,
+        width:1280,
+        height:720,
       },
       audio: audio
     };
