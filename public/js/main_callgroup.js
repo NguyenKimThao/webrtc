@@ -26,6 +26,7 @@ var mDataRoom = {};
 var mPeerConnection = null;
 var isStart = false;
 var constraintsGobal = {};
+var isShareScreen = false;
 
 function stop() {
   $("#joinaudio").prop('disabled', false);
@@ -184,6 +185,7 @@ function call(video, audio) {
       audio: audio
     };
   }
+
   configOffer = {
     offerToReceiveVideo: video,
     offerToReceiveAudio: audio,
@@ -452,7 +454,7 @@ function buildOffer(roomName, dataRoom) {
     + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
     + "a=rtpmap:107 rtx/90000\n"
     + "a=fmtp:107 apt=97\n"
-  
+
   var keys = dataRoom.keys;
   Object.keys(dataRoom).forEach(i => {
     var peerUser = dataRoom[i];
@@ -488,8 +490,26 @@ function getVideo(peerId, roomName) {
   return sdpVideo;
 }
 
-function ToggleShareScreen(){
-  
+function ToggleShareScreen() {
+  if (isShareScreen == false) {
+    if (navigator.getDisplayMedia) {
+      navigator.getDisplayMedia({ video: true }).then(gotStream).catch(function (e) {
+        alert('getUserMedia() error: ' + e.name);
+      });
+    } else if (navigator.mediaDevices.getDisplayMedia) {
+      navigator.mediaDevices.getDisplayMedia({ video: true }).then(gotStream).catch(function (e) {
+        alert('getUserMedia() error: ' + e.name);
+      });
+    } else {
+      navigator.mediaDevices.getUserMedia({ video: { mediaSource: 'screen' } }).then(gotStream).catch(function (e) {
+        alert('getUserMedia() error: ' + e.name);
+      });
+    }
+
+  } else {
+    call(configOffer.offerToReceiveVideo, configOffer.offerToReceiveAudio);
+  }
+  isShareScreen = isShareScreen ? false : true;
 }
 
 function ToggleVideoLocal() {
