@@ -24,6 +24,8 @@ var version = "0.0.0"
 var roomManager = {};
 var mDataRoom = {};
 var mPeerConnection = null;
+var isStart = false;
+var constraintsGobal = {};
 
 function stop() {
   $("#joinaudio").prop('disabled', false);
@@ -88,20 +90,22 @@ window.onbeforeunload = function () {
 function getConfigRTCPeerConnection(userid, room, session) {
   var username = room + ":" + userid + ":" + session;
   var pcConfig = {
-    'iceServers': [
-      //   {
-      //   'urls': 'turn:' + server + ":" + port + '?transport=udp',
-      //   "username": username,
-      //   "credential": "123456"
-      // }
-    ],
-    sdpSemantics: 'unified-plan'
+    // 'iceServers': [
+    //   {
+    //     'urls': 'turn:' + server + ":" + port + '?transport=udp',
+    //     "username": username,
+    //     "credential": "123456"
+    //   }
+    // ],
+    sdpSemantics: 'plan-b'
   };
   return pcConfig;
 }
 
 
 function initCall() {
+  if (isStart == true)
+    return 1;
   room = $("#room").val();
   session = room;
   server = $("#server").val()
@@ -109,10 +113,10 @@ function initCall() {
   version = $("#version").val()
   if (!server || server == "") {
     server = $("#servercb").val()
-    if (server == "127.0.0.1" || server == "10.199.213.101")
-      port = "3010"
+    if (server == "127.0.0.1" || server == "10.199.213.101" || server == "172.25.97.95")
+      port = "3005"
     else if (server == "222.255.216.226")
-      port = "8210"
+      port = "8205"
     else
       port = "8010"
   }
@@ -140,6 +144,23 @@ function initCall() {
 
 
 }
+/////////////////
+
+navigator.mediaDevices.enumerateDevices()
+  .then(devices => {
+    console.log(devices)
+    const videos = devices.filter(device => device.kind === 'videoinput');
+    for (var i = 0; i < videos.length; i++) {
+      var video = videos[i];
+      $("#listCamara").append('<option value="' + video.deviceId + '">' + video.label + '</option>')
+    }
+  });
+
+function ChangeCamara() {
+  if (!isStart)
+    return false;
+  call(configOffer.offerToReceiveVideo, configOffer.offerToReceiveAudio)
+}
 
 function call(video, audio) {
   var initcall = initCall();
@@ -150,13 +171,15 @@ function call(video, audio) {
     video: video,
     audio: audio
   };
-  if(video){
-    var width=parseInt($("#width").val()) | 640;
-    var height=parseInt($("#height").val()) | 480;
+  if (video) {
+    var width = parseInt($("#width").val()) | 640;
+    var height = parseInt($("#height").val()) | 480;
+    var deviceId = $("#listCamara").val();
     constraints = {
       video: {
-        width:width,
-        height:height,
+        width: width,
+        height: height,
+        deviceId: deviceId
       },
       audio: audio
     };
@@ -166,17 +189,35 @@ function call(video, audio) {
     offerToReceiveAudio: audio,
   }
 
-
+  console.log(constraints)
   navigator.mediaDevices.getUserMedia(constraints).then(gotStream).catch(function (e) {
     alert('getUserMedia() error: ' + e.name);
   });
 }
 
 function gotStream(stream) {
-  console.log('Adding local stream.');
-  localStream = stream;
-  localVideo.srcObject = stream;
-  socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio });
+  if (isStart == false) {
+    console.log('Adding local stream.');
+    localStream = stream;
+    localVideo.srcObject = stream;
+    socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio });
+  }
+  else {
+    stream.getVideoTracks().forEach(function (track) {
+      var sender = mPeerConnection.getSenders().find(function (s) {
+        return s.track.kind == track.kind;
+      });
+      if (sender) {
+        sender.replaceTrack(track);
+      }
+    });
+
+    //stop track old
+    localStream.getTracks().forEach(track => track.stop())
+    localStream = stream;
+    localVideo.srcObject = stream;
+
+  }
 }
 function getSession() {
   // $.get("http://api.conf.talk.zing.vn/genuid", function (res) {
@@ -229,6 +270,7 @@ function CreateMeeting(roomName, dataRoom) {
   } else {
     configOffer.iceRestart = true;
   }
+  isStart = true;
   maybeStart(mPeerConnection, roomName, dataRoom);
 }
 
@@ -255,11 +297,17 @@ function CreateRTCPeerConnection() {
       var id = event.stream.id;
       console.log('Remote stream added by peerId:', id, event);
       var remoteStream = event.stream;
-      // var videoRemove=$('<div stype="display: inline-block;"></div>');
-      // videoRemove.append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
-      // videoRemove.append('<div>' + id + '</div>');
-      // $("#videos").append(videoRemove);
-      $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
+      roomManager[id] = remoteStream;
+      var videoRemove = $('<div class="col-sm-2"></div>');
+      var idvideo = $(videoRemove.append('<div class="row">').children()[0]);
+      idvideo.append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
+      var idRow = $(videoRemove.append('<div class="row">').children()[1]);
+      idRow.append('<button type="button" onclick="ToggleVideo(\'' + id + '\')">OnOffVideo</button>');
+      idRow.append('<button type="button" onclick="ToogleAudio(\'' + id + '\')">OnOffAudio</button>');
+
+      idRow.append('<spane>PeerId ' + id + '</spane>');
+      $("#videoremotes").append(videoRemove);
+      // $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var remoteVideo = document.querySelector('#remoteVideo' + id);
       remoteVideo.srcObject = remoteStream;
     };
@@ -269,6 +317,7 @@ function CreateRTCPeerConnection() {
     pc.onicecandidate = function (e) {
     };
     pc.addStream(localStream);
+    roomManager[userid] = localStream;
     // pc.oniceconnectionstatechange = handleIceConnectionStateChange;
     console.log('Created RTCPeerConnnection sessecion');
     return pc;
@@ -296,16 +345,16 @@ function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDesc
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
       e = "a=ice-ufrag:" + userid + "_" + roomName;
-    if (e.startsWith("a=fmtp:97 level-asymmetr"))
-      e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f;sprop-parameter-sets=Z0LAH9oFB+hAAAADAEAAr8gDxgyo,aM48gA=="
+    if (e.startsWith("a=fmtp:97"))
+      e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f"
     // if(e.startsWith("a=fingerprint"))
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
       e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
     if (e.startsWith("a=mid:video")) {
-      e = e + "\n"
-        + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
-        + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+      // e = e + "\n"
+      //     + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
+      // + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
     }
     if (e.startsWith("m=audio"))
       dem = 0
@@ -439,6 +488,50 @@ function getVideo(peerId, roomName) {
   return sdpVideo;
 }
 
+function ToggleShareScreen(){
+  
+}
+
+function ToggleVideoLocal() {
+  ToggleVideo(userid)
+
+}
+function ToggleAudioLocal() {
+  ToogleAudio(userid)
+}
+
+function ToggleVideo(peerId) {
+  if (!roomManager[peerId])
+    return;
+  console.log(roomManager[peerId], roomManager[peerId].getVideoTracks());
+  var tracks = roomManager[peerId].getVideoTracks();
+  if (!tracks)
+    return;
+  for (var i = 0; i < tracks.length; i++) {
+    var track = tracks[i];
+    if (track && track.kind == "video") {
+      track.enabled = track.enabled ? false : true;
+    }
+  }
+}
+function ToogleAudio(peerId) {
+  if (!roomManager[peerId])
+    return;
+  console.log(roomManager[peerId].getAudioTracks());
+  var tracks = roomManager[peerId].getAudioTracks();
+  if (!tracks)
+    return;
+  for (var i = 0; i < tracks.length; i++) {
+    var track = tracks[i];
+    if (track && track.kind == "audio") {
+      track.enabled = track.enabled ? false : true;
+    }
+  }
+}
+
+
+
+////////////////////////////////////////////////////////////////
 
 function getStats(pc) {
   var rest = 0;
