@@ -22,8 +22,8 @@
 			<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
 				<!-- <option value="222.255.216.226">ZRTP6(222.255.216.226)</option> -->
 				<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
-				<option value="172.25.97.95">Local(172.25.97.95)</option>
 				<option value="127.0.0.1">Local(127.0.0.1)</option>
+				<option value="172.25.97.95">Local(172.25.97.95)</option>
 				<option value="10.42.0.81">PC(10.42.0.81)</option>
 			</select>
 			<!-- <br>
@@ -35,8 +35,10 @@
 			List Camara:
 			<select id="listCamara" style="margin-bottom:5px;margin-top: 5px" onchange="ChangeCamara()"></select>
 			<br>
-			Width: <input class="input" type="text" id="width" value="640" />
-			Height: <input class="input" type="text" id="height" value="480" />
+			<div style="display: none">
+				Width: <input class="input" type="number" id="width" value="640" />
+				Height: <input class="input" type="number" id="height" value="480" />
+			</div>
 			<!-- <br> -->
 			<!-- SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px;display: none;">
 			<option value="2">PC</option>
@@ -48,14 +50,15 @@
 		<button onclick="CallAudio()" id="callaudio">Call Audio</button>
 		<button onclick="CallVideo()" id="callvideo">Call Video</button>
 		<br> -->
-			<br>
-
 			userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled />
+			<br>
 			<!-- <br> -->
-			roommID: <input type="text" id="room" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
+			roommID: <input type="text" id="room" style="margin-bottom:5px;margin-top: 5px" value="" />
+			LoopBack: <input class="input" type="number" id="loopBack" value="0" />
+			<br>
 			<button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
 			<button onclick="JoinVideo()" id="joinvideo">Join Video</button>
-			<button onclick="JoinCall()" id="joincall">Join Call</button>
+			<button onclick="JoinCall()" id="joincall" style="margin-left: 50px">Join Call</button>
 			<br>
 		</div>
 
@@ -64,10 +67,12 @@
 			<video id="localVideo" autoplay muted playsinline></video>
 			<!-- <video id="remoteVideo" autoplay playsinline></video> -->
 		</div>
-		<button onclick="ToggleVideoLocal()">OnOffVideo</button>
-		<button onclick="ToggleAudioLocal()">OnOffAduo</button>
-		<button onclick="ToggleShareScreen()">ShareScreen</button>
-		<br>
+		<div id="actionVideo" style="font-size: 12px;">
+			<button onclick="ToggleVideoLocal()">OnOffVideo</button>
+			<button onclick="ToggleAudioLocal()">OnOffAduo</button>
+			<button onclick="ToggleShareScreen()">ShareScreen</button>
+			<br>
+		</div>
 		Video Remote:
 		<div id="videoremotes" class="row">
 

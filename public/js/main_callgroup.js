@@ -27,6 +27,10 @@ var mPeerConnection = null;
 var isStart = false;
 var constraintsGobal = {};
 var isShareScreen = false;
+var typeCall = 0; //0: web is callee , 1: web is caller, default: web is callee
+var loopBack = 0;
+
+$("#actionVideo").hide();
 
 function stop() {
   $("#joinaudio").prop('disabled', false);
@@ -112,6 +116,7 @@ function initCall() {
   server = $("#server").val()
   port = $("#port").val()
   version = $("#version").val()
+  loopBack = $("#loopBack").val() | 0
   if (!server || server == "") {
     server = $("#servercb").val()
     if (server == "127.0.0.1" || server == "10.199.213.101" || server == "172.25.97.95")
@@ -138,6 +143,7 @@ function initCall() {
   //   alert("KhÃ´ng Ä‘á»ƒ roomID phai khÃ¡c vá»›i userID trá»‘ng")
   //   return 0
   // }
+  $("#actionVideo").show();
   $("#joinaudio").prop('disabled', true);
   $("#joinvideo").prop('disabled', true);
   $("#joincall").prop('disabled', true);
@@ -178,6 +184,10 @@ function call(video, audio) {
     var deviceId = $("#listCamara").val();
     constraints = {
       video: {
+        frameRate: {
+          min: 18,
+          max: 30
+        },
         width: width,
         height: height,
         deviceId: deviceId
@@ -202,7 +212,7 @@ function gotStream(stream) {
     console.log('Adding local stream.');
     localStream = stream;
     localVideo.srcObject = stream;
-    socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio });
+    socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio, loopBack:loopBack });
   }
   else {
     stream.getVideoTracks().forEach(function (track) {
@@ -231,8 +241,8 @@ function getSession() {
   // })
   $.get("/genuid", function (res) {
     userid = res.data.id;
-    // $("#room").val(userid);
-    $("#room").val(1);
+    $("#room").val(userid);
+    // $("#room").val(1);
     $("#userid").val(userid)
   });
 }
@@ -347,7 +357,7 @@ function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDesc
   sdpList.forEach(element => {
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
-      e = "a=ice-ufrag:" + userid + "_" + roomName;
+      e = "a=ice-ufrag:" + userid + "_" + typeCall + "_" + loopBack;
     if (e.startsWith("a=fmtp:97"))
       e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f"
     // if(e.startsWith("a=fingerprint"))
