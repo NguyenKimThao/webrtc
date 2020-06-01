@@ -8,6 +8,7 @@ var express = require('express');
 var https = require('https');
 var fs = require('fs');
 var id = 0
+var cors = require('cors')
 // This line is from the Node.js HTTPS documentation.
 var options = {
   key: fs.readFileSync('./key.pem'),
@@ -22,6 +23,7 @@ var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
 // var appHttps = https.createServer(options, app).listen(443);
+app.use(cors())
 
 function getUid(){
   id = id + 1

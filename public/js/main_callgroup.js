@@ -218,6 +218,7 @@ function gotStream(stream) {
     localStream.getTracks().forEach(track => track.stop())
     localStream = stream;
     localVideo.srcObject = stream;
+    roomManager[userid] = localStream;
 
   }
 }
