@@ -56,14 +56,15 @@ io.sockets.on('connection', function (socket) {
     }
     var peer = parseInt(data.userid);
     var loopBack = parseInt(data.loopBack)
-    if (loopBack > 0) {
+    if (loopBack > 0&&loopBack<=100) {
       roomManager[data.room] = {};
       for (var i = 0; i < loopBack; i++) {
-        var index = 1000000 + i;
+        var index = 10000 + i;
         roomManager[data.room][index] = { userid: index, video: true, audio: true };
       }
     } else {
       roomManager[data.room][data.room] = { userid: data.room, video: true, audio: true };
+      // roomManager[data.room][12345678] = { userid: 12345678, video: true, audio: true };
     }
 
     var room = roomManager[data.room];
@@ -127,7 +128,7 @@ app.use('/wait', function (req, res) {
   } else if (userPc[uid].status == 1) {
     userPc[uid].status = 2;
     var server = "222.255.216.226";
-    var port = "8205";
+    var port = "8305";
     res.header("Pragma", userPc[uid].peer_id);
     var candidate = getRTCIceCandidate(server, port, userPc[uid].room);
     res.send(JSON.stringify(candidate));
@@ -169,7 +170,7 @@ function getOffer(type, peerId, room) {
       "a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\n" +
       "a=sendrecv\n" +
       "a=rtcp-mux\n" +
-      "a=rtpmap:111 opus/16000/2\n" +
+      "a=rtpmap:111 opus/48000/2\n" +
       "a=rtcp-fb:111 transport-cc\n" +
       "a=fmtp:111 minptime=10;useinbandfec=1\n" +
       "a=ssrc:" + sessionAudio + " cname:f5FD5M4nwcZqWTiQ\n" +

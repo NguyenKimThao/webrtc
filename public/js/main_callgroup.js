@@ -102,7 +102,8 @@ function getConfigRTCPeerConnection(userid, room, session) {
     //     "credential": "123456"
     //   }
     // ],
-    sdpSemantics: 'plan-b'
+    sdpSemantics: 'plan-b',
+    bundlePolicy: 'max-bundle'
   };
   return pcConfig;
 }
@@ -119,11 +120,14 @@ function initCall() {
   loopBack = $("#loopBack").val() | 0
   if (!server || server == "") {
     server = $("#servercb").val()
-    if (server == "127.0.0.1" || server == "10.199.213.101" || server == "172.25.97.95")
+    if (server == "127.0.0.1" || server == "10.199.213.101")
       port = "3005"
     else if (server == "222.255.216.226")
+      port = "8305"
+    else if (server == "172.25.97.95") {
+      server = "222.255.216.226"
       port = "8205"
-    else
+    } else
       port = "8010"
   }
 
@@ -139,8 +143,8 @@ function initCall() {
     alert("KhÃ´ng Ä‘á»ƒ room trá»‘ng")
     return 0;
   }
-  // if (userid == session) {
-  //   alert("KhÃ´ng Ä‘á»ƒ roomID phai khÃ¡c vá»›i userID trá»‘ng")
+  // if (userid == room) {
+  //   alert("KhÃ´ng Ä‘á»ƒ roomID phai khÃ¡c vá»›i userID ")
   //   return 0
   // }
   $("#actionVideo").show();
@@ -212,7 +216,7 @@ function gotStream(stream) {
     console.log('Adding local stream.');
     localStream = stream;
     localVideo.srcObject = stream;
-    socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio, loopBack:loopBack });
+    socket.emit('join', { room: room, userid: userid, video: constraints.video, audio: constraints.audio, loopBack: loopBack });
   }
   else {
     stream.getVideoTracks().forEach(function (track) {
@@ -305,13 +309,13 @@ function CreateRTCPeerConnection() {
     var pcConfig = getConfigRTCPeerConnection(userid, room, session)
     if (!pcConfig)
       return null;
-    var pc = new RTCPeerConnection({ sdpSemantics: 'plan-b' });
+    var pc = new RTCPeerConnection(pcConfig);
     pc.onaddstream = function (event) {
       var id = event.stream.id;
       console.log('Remote stream added by peerId:', id, event);
       var remoteStream = event.stream;
       roomManager[id] = remoteStream;
-      var videoRemove = $('<div class="col-sm-2"></div>');
+      var videoRemove = $('<div class="col-sm-2" id="peer' + id + '"></div>');
       var idvideo = $(videoRemove.append('<div class="row">').children()[0]);
       idvideo.append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var idRow = $(videoRemove.append('<div class="row">').children()[1]);
@@ -323,6 +327,17 @@ function CreateRTCPeerConnection() {
       // $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var remoteVideo = document.querySelector('#remoteVideo' + id);
       remoteVideo.srcObject = remoteStream;
+
+
+      var speechEvents = hark(remoteStream);
+      speechEvents.on('speaking', function () {
+        $("#peer" + id).addClass('speakerStart')
+      });
+
+      speechEvents.on('stopped_speaking', function () {
+        $("#peer" + id).removeClass('speakerStart')
+      });
+
     };
     pc.onremovestream = function (event) {
       console.log('Remote stream remove by peerId:' + event, event.stream);
@@ -413,13 +428,11 @@ function getOffer(roomName, dataRoom) {
   var message = { sdp: sdp, type: "offer" };
   return message
 }
-var sttRestart = 0;
 
 function buildOffer(roomName, dataRoom) {
-  // sttRestart++;
   var sdp = ""
     + "v=0\n"
-    + "o=- 1443513048222864666 " + sttRestart + " IN IP4 127.0.0.1\n"
+    + "o=- 1443513048222864666 " + 0 + " IN IP4 127.0.0.1\n"
     + "s=-\n"
     + "t=0 0\n"
     + "a=group:BUNDLE audio video\n"
@@ -442,7 +455,7 @@ function buildOffer(roomName, dataRoom) {
     + "a=rtcp-fb:111 transport-cc\n"
     + "a=fmtp:111 minptime=10;useinbandfec=1\n";
   var sdpVideo = ""
-    + "m=video 9 UDP/TLS/RTP/SAVPF 97 107\n"
+    + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
     + "c=IN IP4 0.0.0.0\n"
     + "a=rtcp:9 IN IP4 0.0.0.0\n"
     + "a=ice-ufrag:room" + roomName + "\n"
@@ -463,8 +476,8 @@ function buildOffer(roomName, dataRoom) {
     + "a=rtcp-fb:97 nack\n"
     + "a=rtcp-fb:97 nack pli\n"
     + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
-    + "a=rtpmap:107 rtx/90000\n"
-    + "a=fmtp:107 apt=97\n"
+  // + "a=rtpmap:107 rtx/90000\n"
+  // + "a=fmtp:107 apt=97\n"
 
   var keys = dataRoom.keys;
   Object.keys(dataRoom).forEach(i => {

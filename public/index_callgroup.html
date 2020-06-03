@@ -12,6 +12,13 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
 		integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
 		crossorigin="anonymous"></script>
+	<style>
+		.speakerStart {
+			border-color: blue;
+			border-width: 3px;
+			border-style: solid;
+		}
+	</style>
 </head>
 
 <body>
@@ -22,8 +29,8 @@
 			<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
 				<!-- <option value="222.255.216.226">ZRTP6(222.255.216.226)</option> -->
 				<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
-				<option value="127.0.0.1">Local(127.0.0.1)</option>
 				<option value="172.25.97.95">Local(172.25.97.95)</option>
+				<option value="127.0.0.1">Local(127.0.0.1)</option>
 				<option value="10.42.0.81">PC(10.42.0.81)</option>
 			</select>
 			<!-- <br>
@@ -63,7 +70,7 @@
 		</div>
 
 		Video Local:
-		<div id="videos">
+		<div id="videos" style="font-size: 12px;">
 			<video id="localVideo" autoplay muted playsinline></video>
 			<!-- <video id="remoteVideo" autoplay playsinline></video> -->
 		</div>
@@ -74,7 +81,7 @@
 			<br>
 		</div>
 		Video Remote:
-		<div id="videoremotes" class="row">
+		<div id="videoremotes" class="row" style="font-size: 12px;">
 
 		</div>
 
@@ -82,6 +89,8 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="js/adapter-latest.js"></script>
 		<script src="js/main_callgroup.js"></script>
+		<script src="js/hark.bundle.js"></script>
+
 
 </body>
 
