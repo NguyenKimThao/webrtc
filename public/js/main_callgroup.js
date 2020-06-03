@@ -329,14 +329,14 @@ function CreateRTCPeerConnection() {
       remoteVideo.srcObject = remoteStream;
 
 
-      var speechEvents = hark(remoteStream);
-      speechEvents.on('speaking', function () {
-        $("#peer" + id).addClass('speakerStart')
-      });
+      // var speechEvents = hark(remoteStream);
+      // speechEvents.on('speaking', function () {
+      //   $("#peer" + id).addClass('speakerStart')
+      // });
 
-      speechEvents.on('stopped_speaking', function () {
-        $("#peer" + id).removeClass('speakerStart')
-      });
+      // speechEvents.on('stopped_speaking', function () {
+      //   $("#peer" + id).removeClass('speakerStart')
+      // });
 
     };
     pc.onremovestream = function (event) {
