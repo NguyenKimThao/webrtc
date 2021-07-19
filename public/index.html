@@ -1,57 +1,49 @@
-<!DOCTYPE html>
 <html>
-
-	<head>
-
-		<title>Realtime communication with WebRTC</title>
-
-		<link rel="stylesheet" href="/css/main.css" />
-
-	</head>
-
-	<body>
-
-		<h1>Realtime communication with WebRTC</h1>
-		Server:<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
-			<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
-			<option value="127.0.0.1">Local(127.0.0.1)</option>
-		</select>
-		<br>
-		Server: <input type="text" id="server" value="" />
-		<br>
-		Port: <input type="text" id="port" value="" />
-		<br>
-		SupportVersion:<select id="version" style="margin-bottom:5px;margin-top: 5px">
-			<option value="0">Web</option>
-			<option value="2">PC</option>
-		</select>
-		<br>
-		<input type="hidden" id="typeAudio" value="111"/>
-		<br>
-		<input type="hidden" id="typeVideo" value="125" />
-		<button onclick="Reset()">Reset</button>
-		<!-- <button onclick="Restart()">Restart</button> -->
-		<br>
-		<br>
-		<button onclick="CallAudio()" id="callaudio">Call Audio</button>
-		<button onclick="CallVideo()" id="callvideo">Call Video</button>
-		<br>
-		<br>
-		<button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
-		<button onclick="JoinVideo()" id="joinvideo">Join Video</button>
-		<br>
-		userID: <input type="text" id="userid" style="margin-bottom:5px;margin-top: 5px" value="" disabled /><br>
-		partnerID: <input type="text" id="session" style="margin-bottom:5px;margin-top: 5px" value="" /><br>
-		<div id="videos">
-			<video id="localVideo" autoplay muted playsinline></video>
-			<video id="remoteVideo" autoplay playsinline></video>
-		</div>
-		<!-- This file is automatically added/served when running "node index.js". -->
-		<script src="/socket.io/socket.io.js"></script>
-		<script src="js/adapter-latest.js"></script>
-		<script src="js/jquery-3.4.0.min.js"></script>
-		<script src="js/main.js"></script>
-
-	</body>
-
+    <head>
+        <link rel="stylesheet" href="main.css">
+    </head>
+<body>
+    <div class="card">
+      <div class="back"></div>
+      <div class="front">
+        <div class="imgset">
+             <img width="100%" src="2713997.png">
+           </div>
+      </div>
+      <div class="text-container">
+        <p id="head">Happy Birthday</p>
+        <p id="head">Trâm Sunny!</p>
+        <p>20-07-1997</p>
+        <p>Hope your day goes great!</p>
+      </div>
+    </div>
+      <div class="card">
+      <div class="back"></div>
+      <div class="front">
+        <div class="imgset">
+             <img width="100%" src="2713997.png">
+           </div>
+      </div>
+      <div class="text-container">
+        <p id="head">Happy Birthday</p>
+        <p id="head">Trâm Sunny!</p>
+        <p>Thành công trong công việc</p>
+        <p>Hope your day goes great!</p>
+      </div>
+    </div>
+      <div class="card">
+      <div class="back"></div>
+      <div class="front">
+        <div class="imgset">
+             <img width="100%" src="2713997.png">
+           </div>
+      </div>
+      <div class="text-container">
+        <p id="head">Happy Birthday</p>
+        <p id="head">Trâm Sunny!</p>
+        <p>I hope your special day will bring you lots of happiness, love, and fun. You deserve them a lot. Enjoy!</p>
+        <p>Hope your day goes great!</p>
+      </div>
+    </div>
+    </body>
 </html>
