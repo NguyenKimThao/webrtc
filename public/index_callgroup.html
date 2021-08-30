@@ -28,9 +28,9 @@
 			Server:
 			<select id="servercb" style="margin-bottom:5px;margin-top: 5px">
 				<!-- <option value="222.255.216.226">ZRTP6(222.255.216.226)</option> -->
+				<option value="127.0.0.1">Local(127.0.0.1)</option>
 				<option value="222.255.216.226">ZRTP6(222.255.216.226)</option>
 				<option value="172.25.97.95">Local(172.25.97.95)</option>
-				<option value="127.0.0.1">Local(127.0.0.1)</option>
 				<option value="10.42.0.81">PC(10.42.0.81)</option>
 			</select>
 			<!-- <br>
@@ -63,16 +63,19 @@
 			roommID: <input type="text" id="room" style="margin-bottom:5px;margin-top: 5px" value="" />
 			LoopBack: <input class="input" type="number" id="loopBack" value="0" />
 			<br>
+			<button onclick="RestartIce()" id="restartIce">RestartIce</button>
 			<button onclick="JoinAudio()" id="joinaudio">Join Audio</button>
 			<button onclick="JoinVideo()" id="joinvideo">Join Video</button>
 			<button onclick="JoinCall()" id="joincall" style="margin-left: 50px">Join Call</button>
+			<br>
+			Quality: <input id="quality" /> 
 			<br>
 		</div>
 
 		Video Local:
 		<div id="videos" style="font-size: 12px;">
 			<video id="localVideo" autoplay muted playsinline></video>
-			<!-- <video id="remoteVideo" autoplay playsinline></video> -->
+			<video id="remoteVideo" autoplay playsinline></video>
 		</div>
 		<div id="actionVideo" style="font-size: 12px;">
 			<button onclick="ToggleVideoLocal()">OnOffVideo</button>

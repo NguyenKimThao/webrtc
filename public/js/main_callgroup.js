@@ -122,13 +122,13 @@ function initCall() {
   loopBack = $("#loopBack").val() | 0
   if (!server || server == "") {
     server = $("#servercb").val()
-    if (server == "127.0.0.1" || server == "10.199.213.101"){
+    if (server == "127.0.0.1") {
       port = "3010"
-      // server ="10.79.21.221"
+      // server = "10.79.21.221"
     }
-    
+
     else if (server == "222.255.216.226")
-      port = "8305"
+      port = "8100"
     else if (server == "172.25.97.95") {
       server = "222.255.216.226"
       port = "8205"
@@ -326,25 +326,42 @@ function CreateRTCPeerConnection() {
       return null;
     var pc = new RTCPeerConnection(pcConfig);
     pc.onaddstream = function (event) {
+      var stream = event.stream;;
       var id = event.stream.id;
+      if (id.startsWith("{"))
+        return;
+      if (stream.getAudioTracks()[0]) {
+        stream.getAudioTracks()[0].enabled = false;
+      }
       console.log('Remote stream added by peerId:', id, event);
-      var remoteStream = event.stream;
-      roomManager[id] = remoteStream;
+      roomManager[id] = stream;
       var videoRemove = $('<div class="col-sm-2" id="peer' + id + '"></div>');
       var idvideo = $(videoRemove.append('<div class="row">').children()[0]);
       idvideo.append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var idRow = $(videoRemove.append('<div class="row">').children()[1]);
       idRow.append('<button type="button" onclick="ToggleVideo(\'' + id + '\')">OnOffVideo</button>');
       idRow.append('<button type="button" onclick="ToogleAudio(\'' + id + '\')">OnOffAudio</button>');
+      setInterval(() => {
+        if (stream.getVideoTracks() && stream.getVideoTracks()[0]) {
+          let fps = 0;
+          let width = stream.getVideoTracks()[0].getSettings().width
+          let height = stream.getVideoTracks()[0].getSettings().height
+          if (stream.getVideoTracks() && stream.getVideoTracks()[0]) {
+            fps = stream.getVideoTracks()[0].getSettings().frameRate
+          }
+          $("#w" + id).html(" Wight:" + width);
+          $("#h" + id).html(" Height:" + height);
+        }
 
-      idRow.append('<spane>PeerId ' + id + '</spane>');
+      }, 1000)
+      idRow.append('<spane>PeerId ' + id + ' </spane><spane id="w' + id + '">Wight: 0</spane><spane id="h' + id + '">Height: 0</spane>');
       $("#videoremotes").append(videoRemove);
       // $("#videos").append('<video id="remoteVideo' + id + '" autoplay playsinline></video>');
       var remoteVideo = document.querySelector('#remoteVideo' + id);
-      remoteVideo.srcObject = remoteStream;
+      remoteVideo.srcObject = stream;
 
 
-      // var speechEvents = hark(remoteStream);
+      // var speechEvents = hark(stream);
       // speechEvents.on('speaking', function () {
       //   $("#peer" + id).addClass('speakerStart')
       // });
@@ -360,6 +377,18 @@ function CreateRTCPeerConnection() {
     pc.onicecandidate = function (e) {
     };
     pc.addStream(localStream);
+
+    // pc.addTransceiver(localStream.getVideoTracks()[0], {
+    //   direction: "sendrecv",
+    //   streams: [localStream],
+    //   sendEncodings: [
+    //     { rid: "h", maxBitrate: 1200 * 1024 },
+    //     { rid: "m", maxBitrate: 600 * 1024, scaleResolutionDownBy: 2 },
+    //     { rid: "l", maxBitrate: 300 * 1024, scaleResolutionDownBy: 4 }
+    //   ]
+    // });
+    // console.log(pc.getSenders());
+
     dataChannel = pc.createDataChannel("data_channel", {});
     roomManager[userid] = localStream;
 
@@ -386,7 +415,7 @@ function RestartIce() {
 }
 
 function sendDataChannel(data) {
-  console.log('send data:', dataChannel, data)
+  // console.log('send data:', dataChannel, data)
   if (dataChannel && dataChannel.readyState == 'open') {
     dataChannel.send(JSON.stringify(data));
   }
@@ -395,14 +424,18 @@ function sendDataChannel(data) {
 function ping() {
   var data = {
     actionType: "ping",
+    enableAudio: true,
+    enableVideo: true,
     streams: []
   };
 
   for (var k in roomManager) {
     var stream = roomManager[k];
+    var quality = $("#quality").val() ? $("#quality").val() : 0;
     var enableAudio = stream.getAudioTracks() && stream.getAudioTracks()[0] ? stream.getAudioTracks()[0].enabled : false;
     var pingData = {
       peerId: stream.id,
+      quality: quality,
       enableAudio: enableAudio
     };
     pingData.enableVideo = stream.getVideoTracks() && stream.getVideoTracks()[0] ? stream.getVideoTracks()[0].enabled : false;
@@ -427,16 +460,25 @@ function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDesc
     var e = element;
     if (e.startsWith("a=ice-ufrag"))
       e = "a=ice-ufrag:v=1_peerId=" + userid + "_shareId=" + 0 + "_typeCall=" + typeCall + "_loopBack=" + loopBack + "_nRetry=" + 0 + "_object=" + 0;
-    if (e.startsWith("a=fmtp:97"))
-      e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f"
+    if (e.startsWith("a=fmtp:97")) {
+      // e = "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+      // e = e + "a=ssrc:30000 cname:1000"
+    }
     // if(e.startsWith("a=fingerprint"))
     //   e = "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05"
     if (e.startsWith("a=ice-pwd:"))
       e = "a=ice-pwd:asd88fgpdd777uzjYhagZg"
     if (e.startsWith("a=mid:video")) {
       // e = e + "\n"
+      // e = e + "a=rid:h send\n"
+      //   + "a=rid:m send\n"
+      //   + "a=rid:l send\n"
+      //   + "a=simulcast:send h;m;l"
       //     + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
       // + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01"
+    }
+    if (e.startsWith("a=recvonly")) {
+      e = "a=sendrecv";
     }
     if (e.startsWith("m=audio"))
       dem = 0
@@ -473,6 +515,7 @@ function setLocalAndAddCandidate(peerconnection, roomName, dataRoom, sessionDesc
   // peerconnection.setConfiguration(getConfigPeerConnectionOld())
   peerconnection.setLocalDescription(sessionDescription);
   peerconnection.addIceCandidate(getRTCIceCandidate());
+  console.log('getRTCIceCandidate()', getRTCIceCandidate())
 }
 
 
@@ -509,7 +552,7 @@ function buildOffer(roomName, dataRoom) {
     + "a=rtcp-fb:111 transport-cc\n"
     + "a=fmtp:111 minptime=10;useinbandfec=1\n";
   var sdpVideo = ""
-    + "m=video 9 UDP/TLS/RTP/SAVPF 97\n"
+    + "m=video 9 UDP/TLS/RTP/SAVPF 96\n"
     + "c=IN IP4 0.0.0.0\n"
     + "a=rtcp:9 IN IP4 0.0.0.0\n"
     + "a=ice-ufrag:room" + roomName + "\n"
@@ -518,18 +561,27 @@ function buildOffer(roomName, dataRoom) {
     + "a=fingerprint:sha-256 F0:11:FC:75:A5:58:A2:30:85:A2:88:ED:38:58:AC:4F:C0:7E:DD:44:E4:84:99:ED:13:1C:89:E9:7D:C1:5B:05\n"
     + "a=setup:actpass\n"
     + "a=mid:video\n"
+    + "b=AS:800\n"
     + "a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\n"
     + "a=extmap:5 http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01\n"
+    // + "a=extmap:9 urn:ietf:params:rtp-hdrext:sdes:mid\n"
+    + "a=extmap:10 urn:ietf:params:rtp-hdrext:sdes:rtp-stream-id\n"
+    // + "a=extmap:11 urn:ietf:params:rtp-hdrext:sdes:repaired-rtp-stream-id\n"
     + "a=sendrecv\n"
     + "a=rtcp-mux\n"
     + "a=rtcp-rsize\n"
-    + "a=rtpmap:97 H264/90000\n"
-    + "a=rtcp-fb:97 goog-remb\n"
-    + "a=rtcp-fb:97 transport-cc\n"
-    + "a=rtcp-fb:97 ccm fir\n"
-    + "a=rtcp-fb:97 nack\n"
-    + "a=rtcp-fb:97 nack pli\n"
-    + "a=fmtp:97 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+    + "a=rtpmap:96 H264/90000\n"
+    + "a=rtcp-fb:96 goog-remb\n"
+    + "a=rtcp-fb:96 transport-cc\n"
+    + "a=rtcp-fb:96 ccm fir\n"
+    + "a=rtcp-fb:96 nack\n"
+    + "a=rtcp-fb:96 nack pli\n"
+    + "a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=0;profile-level-id=42e01f\n"
+  // + "a=rid:h recv\n"
+  // + "a=rid:m recv\n"
+  // + "a=rid:l recv\n"
+  // + "a=simulcast:recv h;m;l\n"
+
   var sdpDataChannel = ""
     + "m=application 9 UDP/DTLS/SCTP webrtc-datachannel\n"
     + "c=IN IP4 0.0.0.0\n"
@@ -649,23 +701,132 @@ function ToogleAudio(peerId) {
 function getStats(pc) {
   var rest = 0;
   window.setInterval(function () {
-    pc.getStats(null).then(stats => {
-      let statsOutput = "";
-      for (var report in stats) {
-        statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
-          `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
-        console.log(report, statsOutput);
-        // Now the statistics for this report; we intentially drop the ones we
-        // sorted to the top above
+    pc.getReceivers().forEach(receiver => {
+      console.log('recv:', receiver)
+      if (receiver.track.kind != "video") return;
+      receiver.getStats(receiver.track).then(stats => {
+        let statsOutput = "";
 
-        // Object.keys(report).forEach(statName => {
-        //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
-        //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
-        //     console.log(statsOutput)
-        //   }
-        // });
-      }
-    });
+        stats.forEach(report => {
+          if (report.type != "inbound-rtp")
+            return;
+          statsOutput += `<h2>Report: ${report.type}</h2>\n<strong>ID:</strong> ${report.id}<br>\n` +
+            `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
 
-  }, 1000);
+          // Now the statistics for this report; we intentially drop the ones we
+          // sorted to the top above
+
+          Object.keys(report).forEach(statName => {
+            if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
+              statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
+            }
+          });
+        });
+
+        // console.log(statsOutput);
+      });
+
+    })
+
+    // pc.getStats(null).then(stats => {
+    //   let statsOutput = "";
+    //   for (var report in stats) {
+    //     statsOutput += `<h2>Report: ${report.type}</h3>\n<strong>ID:</strong> ${report.id}<br>\n` +
+    //       `<strong>Timestamp:</strong> ${report.timestamp}<br>\n`;
+    //     console.log(report, statsOutput);
+    //     // Now the statistics for this report; we intentially drop the ones we
+    //     // sorted to the top above
+
+    //     // Object.keys(report).forEach(statName => {
+    //     //   if (statName !== "id" && statName !== "timestamp" && statName !== "type") {
+    //     //     statsOutput += `<strong>${statName}:</strong> ${report[statName]}<br>\n`;
+    //     //     console.log(statsOutput)
+    //     //   }
+    //     // });
+    //   }
+    // });
+
+  }, 10000);
+}
+
+
+// testInit();
+
+function testInit() {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(gotStreamTest).catch(function (e) {
+    alert('getUserMedia() error: ' + e.name);
+  });
+}
+
+async function startTest(stream) {
+
+  /* sender */
+  let sender = new RTCPeerConnection({ showSsrcInSimulcastOffer: true });
+  sender.onicecandidate = e => receiver.addIceCandidate(e.candidate);
+  sender.addTransceiver(stream.getVideoTracks()[0], {
+    direction: "sendrecv",
+    streams: [stream],
+    sendEncodings: [
+      { rid: "h", maxBitrate: 1200 * 1024 },
+      { rid: "m", maxBitrate: 600 * 1024, scaleResolutionDownBy: 2 },
+      { rid: "l", maxBitrate: 300 * 1024, scaleResolutionDownBy: 4 }
+    ]
+  });
+  console.log(sender.getSenders());
+  /* receiver */
+  let receiver = new RTCPeerConnection();
+  receiver.onicecandidate = e => sender.addIceCandidate(e.candidate);
+  receiver.ontrack = e => document.getElementById("remoteVideo").srcObject = e.streams[0];
+
+  let offer = await sender.createOffer();
+
+  var msid = "";
+  var s = "";
+  var sdp = offer.sdp.split('\n');
+  var res = "";
+  sdp.forEach(e => {
+    if (e.startsWith("a=fmtp:108")
+      || e.startsWith("a=rtpmap:109")
+      || e.startsWith("a=rtpmap:119")
+      || e.startsWith("a=fmtp:119")
+      || e.startsWith("a=fmtp:109")
+      || e.startsWith("a=rtpmap:124")
+      || e.startsWith("a=rtpmap:123")) {
+      // e = "";
+    }
+    if (e) {
+      res = res + e + "\n";
+    }
+  });
+  // var ssrcVideo = "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 121 127 120 125 107 108 109 124 119 123"
+  // res = res.replace(new RegExp(ssrcVideo, 'g'), "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 99 100 101 102 121 127 120 125 107 108");
+
+
+  // res = res
+  //   + "a=ssrc:3818935445 cname:/9xLVG5y0PJqxacG\n"
+  //   + "a=ssrc:3818935446 cname:/9xLVG5y0PJqxacG\n"
+  //   + "a=ssrc:3818935448 cname:/9xLVG5y0PJqxacG\n"
+  //   + "a=ssrc-group:SIM 3818935445 3818935446 3818935448\n"
+  offer.sdp = res;
+  console.log(offer);
+  await sender.setLocalDescription(offer);
+  await receiver.setRemoteDescription(offer);
+
+  let answer = await receiver.createAnswer();
+  answer.sdp = answer.sdp
+    + "a=rid:h recv\n"
+    + "a=rid:m recv\n"
+    + "a=rid:l recv\n"
+    + "a=simulcast:recv h;m;l\n"
+  console.log(answer);
+  await receiver.setLocalDescription(answer);
+  await sender.setRemoteDescription(answer);
+
+  console.log(sender.getSenders()[0].getParameters())
+}
+
+function gotStreamTest(stream) {
+  localStream = stream;
+  localVideo.srcObject = stream;
+  startTest(stream);
 }
