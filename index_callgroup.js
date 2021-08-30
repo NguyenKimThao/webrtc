@@ -23,12 +23,38 @@ var app = express();
 app.use(express.static("public"));
 var appHttp = http.Server(app).listen(port);
 // var appHttps = https.createServer(options, app).listen(443);
-app.use(cors())
+// app.use(cors())
 
 function getUid() {
   id = id + 1
   return id + 10;
 }
+
+app.use("/tflite/tflite.js", cors(),function (req, res) {
+  res.sendfile("./public/js/tflite/tflite.js");
+})
+app.use("/tflite/tflite-simd.js", cors(),function (req, res) {
+  res.sendfile("./public/js/tflite/tflite-simd.js");
+})
+
+app.use("/tflite/tflite.wasm", cors(),function (req, res) {
+  res.sendfile("./public/js/tflite/tflite.wasm");
+})
+app.use("/tflite/tflite-simd.wasm", cors(),function (req, res) {
+  res.sendfile("./public/js/tflite/tflite-simd.wasm");
+})
+
+app.use("/model/segm_full_v679.tflite", cors(),function (req, res) {
+  res.sendfile("./public/models/segm_full_v679.tflite");
+})
+app.use("/model/segm_lite_v681.tflite", cors(),function (req, res) {
+  res.sendfile("./public/models/segm_lite_v681.tflite");
+})
+app.use("/model/selfiesegmentation_mlkit-256x256-2021_01_19-v1215.f16.tflite", cors(),function (req, res) {
+  res.sendfile("./public/models/selfiesegmentation_mlkit-256x256-2021_01_19-v1215.f16.tflite");
+})
+
+
 
 app.use("/genuid", function (rep, res) {
   res.json({ "err": 0, "data": { "id": getUid() } })
@@ -56,7 +82,7 @@ io.sockets.on('connection', function (socket) {
     }
     var peer = parseInt(data.userid);
     var loopBack = parseInt(data.loopBack)
-    if (loopBack > 0&&loopBack<=100) {
+    if (loopBack > 0 && loopBack <= 100) {
       roomManager[data.room] = {};
       for (var i = 0; i < loopBack; i++) {
         var index = 10000 + i;
