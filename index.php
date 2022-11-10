@@ -10,7 +10,7 @@
 			top: 0;
 			width: 100%;
 			height: 100%;
-			background-color="#2e2e2e";
+			background-color: #2e2e2e;
 		}
 	</style>
 </HEAD>
@@ -119,7 +119,7 @@
 			var loop = function() {
 				ctx.fillStyle = "red";
 				ctx.font = "48px Arial";
-				ctx.fillText("Thảo - Trâm", 460, 120);
+				ctx.fillText("Thảo - Trâm", innerWidth / 2 - 130, 120);
 
 				var n = -Math.cos(time);
 				pulse((1 + n) * .5, (1 + n) * .5);
