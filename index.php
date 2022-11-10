@@ -2,7 +2,7 @@
 <html>
 
 <HEAD>
-	<TITLE> Anh yêu em </TITLE>
+	<TITLE> Thảo Yêu Trâm </TITLE>
 	<style>
 		canvas {
 			position: absolute;
@@ -27,8 +27,8 @@
 			window.mozRequestAnimationFrame ||
 			window.oRequestAnimationFrame ||
 			window.msRequestAnimationFrame ||
-			(function () {
-				return function (callback, element) {
+			(function() {
+				return function(callback, element) {
 					var lastTime = element.__lastTime;
 					if (lastTime === undefined) {
 						lastTime = 0;
@@ -41,7 +41,7 @@
 			})();
 		window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
 		var loaded = false;
-		var init = function () {
+		var init = function() {
 			if (loaded) return;
 			loaded = true;
 			var mobile = window.isDevice;
@@ -55,14 +55,14 @@
 			ctx.fillRect(0, 0, width, height);
 
 
-			var heartPosition = function (rad) {
+			var heartPosition = function(rad) {
 				return [Math.pow(Math.sin(rad), 3), -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
 			};
-			var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
+			var scaleAndTranslate = function(pos, sx, sy, dx, dy) {
 				return [dx + pos[0] * sx, dy + pos[1] * sy];
 			};
 
-			window.addEventListener('resize', function () {
+			window.addEventListener('resize', function() {
 				width = canvas.width = koef * innerWidth;
 				height = canvas.height = koef * innerHeight;
 				ctx.fillStyle = "rgba(0,0,0,1)";
@@ -79,7 +79,7 @@
 			var heartPointsCount = pointsOrigin.length;
 
 			var targetPoints = [];
-			var pulse = function (kx, ky) {
+			var pulse = function(kx, ky) {
 				for (i = 0; i < pointsOrigin.length; i++) {
 					targetPoints[i] = [];
 					targetPoints[i][0] = kx * pointsOrigin[i][0] + width / 2;
@@ -102,7 +102,10 @@
 					f: "hsla(0," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.3)",
 					trace: []
 				};
-				for (var k = 0; k < traceCount; k++) e[i].trace[k] = { x: x, y: y };
+				for (var k = 0; k < traceCount; k++) e[i].trace[k] = {
+					x: x,
+					y: y
+				};
 			}
 
 			var config = {
@@ -113,7 +116,7 @@
 			var time = 0;
 			var textLeft1 = 0;
 			var textLeft2 = -10;
-			var loop = function () {
+			var loop = function() {
 				ctx.fillStyle = "red";
 				ctx.font = "48px Arial";
 				ctx.fillText("Thảo - Trâm", 460, 120);
@@ -132,8 +135,7 @@
 					if (10 > length) {
 						if (0.95 < rand()) {
 							u.q = ~~(rand() * heartPointsCount);
-						}
-						else {
+						} else {
 							if (0.99 < rand()) {
 								u.D *= -1;
 							}
